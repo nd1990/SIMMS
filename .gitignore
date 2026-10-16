@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# deploy / release artifacts (not source)
+/.deploy/
+/simms-deploy.tar.gz
+/CT-Testing-System-Overview.html
+/.htaccess.simms-logo
+/.proxy.php.simms-logo
+/-w
+*.xlsx

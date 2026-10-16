@@ -1,0 +1,665 @@
+// Industrial CT Testing Management System - Prisma Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// Enum Types
+// ============================================================
+
+enum Role {
+  MASTER_ADMIN
+  COMPANY_ADMIN
+  SUPERVISOR
+  TECHNICIAN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ReportStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  CORRECTION_REQUESTED
+  GENERATED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TestStatus {
+  NOT_STARTED
+  PENDING
+  IN_PROGRESS
+  PASS
+  FAIL
+  COMPLETED
+}
+
+// ============================================================
+// Auth & Access Control
+// ============================================================
+
+model User {
+  id            String     @id @default(cuid())
+  name          String
+  email         String     @unique
+  passwordHash  String
+  role          Role       @default(TECHNICIAN)
+  status        UserStatus @default(ACTIVE)
+  companyId     String?
+  employeeId    String?    @unique
+  lastLoginAt   DateTime?
+  rememberToken String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  company    Company?      @relation(fields: [companyId], references: [id])
+  employee   Employee?      @relation(fields: [employeeId], references: [id])
+  auditLogs  AuditLog[]
+  notifications UserNotification[]
+  reportNotifications ReportNotification[]
+  createdBy  User?         @relation("Creator", fields: [createdById], references: [id])
+  createdById String?
+  usersCreated User[]      @relation("Creator")
+
+  @@index([companyId])
+  @@index([role])
+}
+
+// ============================================================
+// Company / Project / Site / Employee
+// ============================================================
+
+model Company {
+  id            String   @id @default(cuid())
+  name          String
+  code          String   @unique
+  address       String?
+  contactPerson String?
+  contactNumber String?
+  email         String?
+  gstNumber     String?
+  status        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  projects      Project[]
+  sites         Site[]
+  employees     Employee[]
+  assignments   TestingAssignment[]
+  reports       TestingReport[]
+  companyAdmins User[]
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  companyId   String
+  epcCompany  String?
+  location    String?
+  description String?
+  status      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company     Company            @relation(fields: [companyId], references: [id])
+  sites       Site[]
+  assignments TestingAssignment[]
+  reports     TestingReport[]
+
+  @@index([companyId])
+}
+
+model Site {
+  id            String   @id @default(cuid())
+  name          String
+  code          String   @unique
+  companyId     String
+  projectId     String?
+  address       String?
+  switchYardName String?
+  contactPerson String?
+  contactNumber String?
+  status        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  company     Company            @relation(fields: [companyId], references: [id])
+  project     Project?           @relation(fields: [projectId], references: [id])
+  assignments TestingAssignment[]
+  reports     TestingReport[]
+
+  @@index([companyId])
+  @@index([projectId])
+}
+
+model Employee {
+  id          String   @id @default(cuid())
+  name        String
+  code        String   @unique
+  email       String   @unique
+  mobileNumber String?
+  role        Role     @default(TECHNICIAN)
+  companyId   String
+  department  String?
+  designation String?
+  designationGrade String?
+  status      Boolean  @default(true)
+  joiningDate DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company            Company             @relation(fields: [companyId], references: [id])
+  user               User?
+  assignments        TestingAssignment[]
+  attachments        Attachment[]
+  testingReadings    TestingReading[]
+  reportSubmissions  TestingReport[]     @relation("ReportTester")
+  signatures         Signature[]
+  approvalActions    ReportApproval[]    @relation("Approver")
+
+  @@index([companyId])
+  @@index([role])
+}
+
+// ============================================================
+// Testing Assignments
+// ============================================================
+
+model TestingAssignment {
+  id           String           @id @default(cuid())
+  companyId    String
+  projectId    String?
+  siteId       String?
+  testingType  String
+  assignedToId String?
+  assignedById String?
+  assignedDate DateTime?        @default(now())
+  scheduledDate DateTime?
+  dueDate      DateTime?
+  priority     Priority         @default(MEDIUM)
+  status       AssignmentStatus @default(ASSIGNED)
+  remarks      String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  company  Company  @relation(fields: [companyId], references: [id])
+  project  Project? @relation(fields: [projectId], references: [id])
+  site     Site?    @relation(fields: [siteId], references: [id])
+  assignedTo Employee? @relation(fields: [assignedToId], references: [id])
+  reports  TestingReport[]
+
+  @@index([companyId])
+  @@index([assignedToId])
+  @@index([siteId])
+}
+
+// ============================================================
+// Testing Templates & Reports
+// ============================================================
+
+model TestingTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  code      String   @unique
+  version   String?
+  config    Json?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reports TestingReport[]
+}
+
+model TestingReport {
+  id             String       @id @default(cuid())
+  reportNumber   String       @unique
+  companyId      String
+  projectId      String?
+  siteId         String?
+  assignmentId   String?
+  templateId     String?
+  testingType    String
+  testingDate    DateTime?
+  status         ReportStatus @default(DRAFT)
+  testedById     String?
+  approvedById   String?
+  approvedAt     DateTime?
+  epcBy          String?
+  switchYardName String?
+  testReportNo   String?
+  overallResult  String?
+  finalRemarks   String?
+  data           Json?
+  createdById    String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  company    Company            @relation(fields: [companyId], references: [id])
+  project    Project?           @relation(fields: [projectId], references: [id])
+  site       Site?              @relation(fields: [siteId], references: [id])
+  assignment TestingAssignment? @relation(fields: [assignmentId], references: [id])
+  template   TestingTemplate?   @relation(fields: [templateId], references: [id])
+  testedBy   Employee?          @relation("ReportTester", fields: [testedById], references: [id])
+
+  ctSpecifications          CTSpecification[]
+  ctCores                   CTCore[]
+  capacitanceTanDelta       CapacitanceTanDelta[]
+  insulationResistanceTests InsulationResistanceTest[]
+  windingResistanceTests    WindingResistanceTest[]
+  polarityTests             PolarityTest[]
+  coreIdentificationTests   CoreIdentificationTest[]
+  ratioTests                RatioTest[]
+  kneePointTests            KneePointTest[]
+  ctConnection              CTConnection?
+  ctSeriesTests             CTSeriesTest[]
+  meteringProtectionCores   MeteringProtectionCore[]
+  testingChecklist          TestingChecklist[]
+  testingReadings           TestingReading[]
+  approvals                 ReportApproval[]
+  attachments               Attachment[]
+  signatures                Signature[]
+  notifications             ReportNotification[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([siteId])
+  @@index([testedById])
+}
+
+// ============================================================
+// Test Data Tables (relational, per report)
+// ============================================================
+
+// Template 1: 66 KV CT Testing checklist
+model TestingChecklist {
+  id        String     @id @default(cuid())
+  reportId  String
+  testName  String
+  status    TestStatus @default(NOT_STARTED)
+  readings  String?
+  remarks   String?
+  testedBy  String?
+  testedAt  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  report TestingReport @relation(fields: [reportId], references: [id])
+
+  @@index([reportId])
+}
+
+// Generic test reading entry (per-test with tester and date)
+model TestingReading {
+  id        String    @id @default(cuid())
+  reportId  String
+  employeeId String?
+  testName  String
+  reading   String?
+  remarks   String?
+  recordedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  report   TestingReport @relation(fields: [reportId], references: [id])
+  employee Employee? @relation(fields: [employeeId], references: [id])
+
+  @@index([reportId])
+}
+
+// Template 2: CT nameplate / specification
+model CTSpecification {
+  id          String   @id @default(cuid())
+  reportId    String   @unique
+  make        String?
+  type        String?
+  insulation  String?
+  hsv         String?
+  ratedSTC    String?
+  nsv         String?
+  crepage     String?
+  referenceStandards String?
+  weight      String?
+  quantityOfOil String?
+  ratedFrequency String?
+  insulationClass String?
+  icth        String?
+  waNumber    String?
+  yearOfManufacturing String?
+
+  report TestingReport @relation(fields: [reportId], references: [id])
+}
+
+// Core details (Core 1-4)
+model CTCore {
+  id             String   @id @default(cuid())
+  reportId       String
+  coreName       String // Core 1, Core 2, Core 3, Core 4
+  coreReference  String?
+  primaryRatio   String?
+  secondaryRatio String?
+  ratedBurden    String?
+  accuracyClass  String?
+  alfIsf         String?
+  minimumKPV     String?
+  lexAt6001A     String?
+  rctAt75C       String?
+
+  report TestingReport @relation(fields: [reportId], references: [id])
+
+  @@index([reportId])
+}
+
+// Capacitance and Tan Delta
+model CapacitanceTanDelta {
+  id          String   @id @default(cuid())
+  reportId    String
+  particular  String?
+  srNo        String?
+  capacitance String?
+  tanDelta    String?
+  remarks     String?
+
+  report TestingReport @relation(fields: [reportId], references: [id])
+
+  @@index([reportId])
+}
+
+// Insulation Resistance Test
+model InsulationResistanceTest {
+  id         String   @id @default(cuid())
+  reportId   String
+  testType   String
+  status     TestStatus @default(NOT_STARTED)
+  meggerUsed String?
+  rPhase     String?
+  yPhase     String?
+  bPhase     String?
+  remarks    String?
+
+  report TestingReport @relation(fields: [reportId], references: [id])
+
+  @@index([reportId])
+}
+
+// Secondary Winding Resistance Measurement
+model WindingResistanceTest {
+  id          String   @id @default(cuid())
+  reportId    String
+  connection  String
+  value       String?
+  rPhase      String?
+  yPhase      String?
+  bPhase      String?
+
+  report TestingReport @relation(fields: [reportId], references: [id])
+
+  @@index([reportId])
+}
+
+// Polarity Test
+model PolarityTest {
+  id       String   @id @default(cuid())
+  reportId String
+  phase    String
+  core1    String?
+  core2    String?
+  core3    String?
+  core4    String?
+  remarks  String?
+
+  report TestingReport @relation(fields: [reportId], references: [id])
+
+  @@index([reportId])
+}
+
+// Core Identification Test
+model CoreIdentificationTest {
+  id          String   @id @default(cuid())
+  reportId    String
+  stage       String // BEFORE_SHORTING / AFTER_SHORTING
+  phase       String
+  injectedCurrent String?
+  core1       String?
+  core2       String?
+  core3       String?
+  core4       String?
+
+  report TestingReport @relation(fields: [reportId], references: [id])
+
+  @@index([reportId])
+}
+
+// Ratio Test
+model RatioTest {
+  id              String   @id @default(cuid())
+  reportId        String
+  phase           String
+  injectedCurrent String?
+  measuredSecondary String?
+  core1           String?
+  core2           String?
+  core3           String?
+  core4           String?
+  ratio           String?
+  remarks         String?
+
+  report TestingReport @relation(fields: [reportId], references: [id])
+
+  @@index([reportId])
+}
+
+// Knee Point Test
+model KneePointTest {
+  id           String   @id @default(cuid())
+  reportId     String
+  kvStep       String?
+  kneePointVoltage String?
+  lex          String?
+  testCurrent  String?
+  core         String?
+  appliedVoltage String?
+  rPhase       String?
+  yPhase       String?
+  bPhase       String?
+  remarks      String?
+
+  report TestingReport @relation(fields: [reportId], references: [id])
+
+  @@index([reportId])
+}
+
+// CT Connection
+model CTConnection {
+  id          String   @id @default(cuid())
+  reportId    String   @unique
+  p1Side      String?
+  p2Side      String?
+  primaryInjection String?
+  ratio       String?
+  d11D71      String?
+  d31D71      String?
+  d51D71      String?
+  c11C71      String?
+  c31C71      String?
+  c51C71      String?
+  remarks     String?
+
+  report TestingReport @relation(fields: [reportId], references: [id])
+}
+
+// CT Series Test
+model CTSeriesTest {
+  id             String   @id @default(cuid())
+  reportId       String
+  description    String?
+  backupRelay    String?
+  aMeter         String?
+  mfm            String?
+  pqmMeter       String?
+  primary        String?
+  secondary      String?
+  rPhase         String?
+  yPhase         String?
+  bPhase         String?
+  ef             String?
+  remarks        String?
+
+  report TestingReport @relation(fields: [reportId], references: [id])
+
+  @@index([reportId])
+}
+
+// Metering and Protection Core
+model MeteringProtectionCore {
+  id            String   @id @default(cuid())
+  reportId      String
+  description   String?
+  meteringCore  String?
+  protectionCore String?
+  rPhase        String?
+  yPhase        String?
+  bPhase        String?
+  ef            String?
+  remarks       String?
+
+  report TestingReport @relation(fields: [reportId], references: [id])
+
+  @@index([reportId])
+}
+
+// ============================================================
+// Approvals, Attachments, Signatures, Notifications, Audit
+// ============================================================
+
+model ReportApproval {
+  id         String   @id @default(cuid())
+  reportId   String
+  approvedById String?
+  action     String // APPROVE / REJECT / REQUEST_CORRECTION
+  comments   String?
+  createdAt  DateTime @default(now())
+
+  report   TestingReport @relation(fields: [reportId], references: [id])
+  approvedBy Employee?    @relation("Approver", fields: [approvedById], references: [id])
+
+  @@index([reportId])
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  reportId  String
+  employeeId String?
+  fileName  String
+  filePath  String
+  mimeType  String?
+  size      Int?
+  uploadedBy String?
+  createdAt DateTime @default(now())
+
+  report   TestingReport @relation(fields: [reportId], references: [id])
+  employee Employee? @relation(fields: [employeeId], references: [id])
+
+  @@index([reportId])
+}
+
+model Signature {
+  id         String   @id @default(cuid())
+  reportId   String
+  employeeId String?
+  roleLabel  String // TESTED_BY / WITNESS / COMPANY_REP
+  name       String?
+  imagePath  String?
+  signedAt   DateTime @default(now())
+
+  report   TestingReport @relation(fields: [reportId], references: [id])
+  employee Employee? @relation(fields: [employeeId], references: [id])
+
+  @@index([reportId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String?
+  type      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  recipients ReportNotification[]
+  userNotifications UserNotification[]
+
+  @@index([read])
+}
+
+model ReportNotification {
+  id             String       @id @default(cuid())
+  reportId       String
+  notificationId String
+  userId         String
+  read           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+
+  report       TestingReport @relation(fields: [reportId], references: [id])
+  notification Notification  @relation(fields: [notificationId], references: [id])
+  user         User          @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([reportId])
+}
+
+model UserNotification {
+  id             String   @id @default(cuid())
+  userId         String
+  notificationId String
+  read           Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  notification Notification @relation(fields: [notificationId], references: [id])
+
+  @@index([userId])
+  @@index([notificationId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  userName  String?
+  action    String
+  module    String
+  recordId  String?
+  oldValue  Json?
+  newValue  Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([module])
+  @@index([createdAt])
+}

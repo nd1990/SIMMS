@@ -1,0 +1,25 @@
+{
+  "name": "CT Testing Management",
+  "short_name": "CT Testing",
+  "description": "Industrial CT Testing Management System - 66 KV Current Transformer testing and reporting",
+  "start_url": "./m/home",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#005b91",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
