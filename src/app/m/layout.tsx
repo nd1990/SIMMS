@@ -19,7 +19,7 @@ export default async function MobileLayout({ children }: { children: React.React
     <div className="min-h-screen bg-slate-100 pb-20">
       <OfflineSync />
       <MobileNav unread={unread} />
-      <main className="mx-auto max-w-xl p-4 pb-6">{children}</main>
+      <main className="mx-auto max-w-xl p-4 pb-6 md:max-w-3xl">{children}</main>
     </div>
   );
 }

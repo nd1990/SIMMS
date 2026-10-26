@@ -1,9 +1,7 @@
 import type { ReportStatus, TestStatus } from "@prisma/client";
 
 export const TESTING_TYPES = [
-  { value: "66KV_CT", label: "66 KV CT Testing Report" },
-  { value: "66KV_LINE_CT", label: "66 KV Line CT Testing Report" },
-  { value: "POWER_TR_STAR_STAR", label: "Power Transformer (Star-Star) Testing Report" },
+  { value: "POWER_TR_STAR_STAR", label: "Power TR Testing Report (Star-Star TR)" },
 ];
 
 export const statusLabels: Record<ReportStatus, string> = {

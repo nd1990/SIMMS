@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Zap, Activity, FileText, ChevronRight, Send, Gauge } from "lucide-react";
+import { FileText, ChevronRight, Send, Gauge } from "lucide-react";
 import { cn, initials, formatDate } from "@/lib/utils";
 import { OfflineSavesCard } from "@/components/mobile/offline-status";
 import { PdfIcon } from "@/components/pdf-icon";
@@ -104,26 +104,10 @@ export default async function MobileHomePage() {
         <div className="grid grid-cols-2 gap-3">
           {[
             {
-              href: "/m/drafts?new=66KV_CT",
-              icon: Zap,
-              chip: "bg-sky-100 text-sky-600",
-              title: "66 KV CT",
-              desc: "Ratios, windings, polarity",
-              wide: false,
-            },
-            {
-              href: "/m/drafts?new=66KV_LINE_CT",
-              icon: Activity,
-              chip: "bg-emerald-100 text-emerald-600",
-              title: "66 KV Line CT",
-              desc: "Full commissioning suite",
-              wide: false,
-            },
-            {
               href: "/m/drafts?new=POWER_TR_STAR_STAR",
               icon: Gauge,
               chip: "bg-indigo-100 text-indigo-600",
-              title: "Power Transformer (Star-Star)",
+              title: "Power TR Testing Report (Star-Star TR)",
               desc: "Ratio, MB, winding, IR & Tan Delta — all 7 sheets",
               wide: true,
             },

@@ -67,6 +67,7 @@ export const employeeSchema = z
     department: z.string().optional(),
     designation: z.string().optional(),
     designationGrade: z.string().optional(),
+    stampPath: z.string().optional(),
     status: z.boolean().default(true),
     joiningDate: z.string().optional(),
     createLogin: z.boolean().default(false),

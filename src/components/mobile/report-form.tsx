@@ -12,15 +12,14 @@ import {
   FileCheck2,
   Pencil,
   ArrowLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import { ReportSections } from "@/components/admin/report-sections";
-import { PowerTrForm } from "@/components/mobile/power-tr-form";
+import { PowerTrForm, SHEET_TABS, type SheetId } from "@/components/mobile/power-tr-form";
 import { PdfIcon } from "@/components/pdf-icon";
 import { getErrorMessage } from "@/lib/utils";
 import {
@@ -171,6 +170,13 @@ export function ReportForm({
   const isPowerTr = payload.templateCode === POWER_TR_TEMPLATE_CODE;
   const editable = canEdit;
 
+  // Power Transformer multi-sheet navigation. The active tab lives here so the
+  // footer can show "Save & Next" on every sheet and only reveal "Submit" once
+  // the user reaches the final (Signatures) sheet.
+  const [powerTrTab, setPowerTrTab] = useState<SheetId>("ratio");
+  const tabIdx = SHEET_TABS.findIndex((t) => t.id === powerTrTab);
+  const isLastSheet = tabIdx === SHEET_TABS.length - 1;
+
   function setPayloadSection<K extends keyof ReportPayload>(key: K, value: ReportPayload[K]) {
     setPayload((prev) => ({ ...prev, [key]: value }));
   }
@@ -183,7 +189,7 @@ export function ReportForm({
     setOpenSections((prev) => ({ ...prev, [sec]: !prev[sec] }));
   }
 
-  async function persistAndSubmit(submit: boolean) {
+  async function persistAndSubmit(submit: boolean, afterSave?: () => void) {
     setBusy(submit ? "submit" : "save");
     try {
       // Validate the Power Transformer report before submitting so an incomplete
@@ -248,6 +254,7 @@ export function ReportForm({
         removeOfflineSave(report.id);
         toast("success", status === "SUBMITTED" ? "Changes saved" : "Draft saved");
         router.refresh();
+        afterSave?.();
       }
     } catch (e) {
       if (!isOnline() || e instanceof TypeError) {
@@ -282,14 +289,18 @@ export function ReportForm({
     }
   }
 
+  function saveAndNextSheet() {
+    const next = SHEET_TABS[tabIdx + 1];
+    if (!next) return;
+    persistAndSubmit(false, () => setPowerTrTab(next.id));
+  }
+
   if (!editable) {
     const readOnlyMeta: [string, string | undefined][] = [
       ["Test date", meta.testingDate],
       ["Switchyard", meta.switchYardName],
       ["EPC / Contractor", meta.epcBy],
       ["Client report no.", meta.testReportNo],
-      ["Overall result", meta.overallResult],
-      ["Final remarks", meta.finalRemarks],
     ];
     return (
       <div className="space-y-5">
@@ -365,7 +376,7 @@ export function ReportForm({
         <div className="absolute -right-6 -top-8 h-32 w-32 rounded-full bg-sky-500/20 blur-2xl" />
         <div className="relative">
           <p className="text-xs font-medium uppercase tracking-wide text-sky-300">
-            {isPowerTr ? "Power Transformer Testing Report" : "CT Testing Report"}
+            {isPowerTr ? "Power TR Testing Report (Star-Star TR)" : "CT Testing Report"}
           </p>
           <h1 className="mt-0.5 text-lg font-bold">{report.reportNumber}</h1>
           <p className="mt-1 text-xs text-slate-300">{report.siteName ?? "No site"} · {report.testingType.replace(/_/g, " ")}</p>
@@ -402,6 +413,8 @@ export function ReportForm({
         <PowerTrForm
           data={payload.powerTr!}
           onChange={(d) => setPayloadSection("powerTr", d)}
+          tab={powerTrTab}
+          onTabChange={setPowerTrTab}
         />
       ) : (
         <Template2Sections
@@ -413,30 +426,26 @@ export function ReportForm({
         />
       )}
 
-      <Section title="Overall result" subtitle="Summary shown on the final report">
-        <Field label="Overall result">
-          <Select value={meta.overallResult} onChange={(e) => setMeta((m) => ({ ...m, overallResult: e.target.value }))}>
-            <option value="">— Select —</option>
-            <option value="SATISFACTORY">SATISFACTORY</option>
-            <option value="NOT SATISFACTORY">NOT SATISFACTORY</option>
-          </Select>
-        </Field>
-        <Field label="Final remarks">
-          <Textarea rows={2} value={meta.finalRemarks} onChange={(e) => setMeta((m) => ({ ...m, finalRemarks: e.target.value }))} placeholder="Overall observations…" />
-        </Field>
-      </Section>
-
       <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t border-slate-200 bg-white lg:static lg:z-auto lg:mt-2 lg:rounded-xl lg:border lg:shadow-sm lg:bottom-auto">
         <div className="mx-auto flex max-w-xl gap-2 px-4 py-2 lg:mx-0 lg:max-w-none">
-          <Button variant="outline" className="h-11 flex-1" disabled={busy !== null} onClick={() => persistAndSubmit(false)}>
-            <Save className="mr-1 h-4 w-4" />
-            {busy === "save" ? "Saving…" : "Save changes"}
-          </Button>
-          {canSubmit && (
-            <Button className="h-11 flex-1" disabled={busy !== null || !canSubmit} onClick={() => persistAndSubmit(true)}>
-              <Send className="mr-1 h-4 w-4" />
-              {busy === "submit" ? "Submitting…" : "Submit"}
+          {isPowerTr && !isLastSheet ? (
+            <Button className="h-11 flex-1" disabled={busy !== null} onClick={saveAndNextSheet}>
+              {busy === "save" ? "Saving…" : "Save & Next"}
+              {busy !== "save" && <ChevronRight className="ml-1 h-4 w-4" />}
             </Button>
+          ) : (
+            <>
+              <Button variant="outline" className="h-11 flex-1" disabled={busy !== null} onClick={() => persistAndSubmit(false)}>
+                <Save className="mr-1 h-4 w-4" />
+                {busy === "save" ? "Saving…" : isPowerTr ? "Save" : "Save changes"}
+              </Button>
+              {canSubmit && (
+                <Button className="h-11 flex-1" disabled={busy !== null || !canSubmit} onClick={() => persistAndSubmit(true)}>
+                  <Send className="mr-1 h-4 w-4" />
+                  {busy === "submit" ? "Submitting…" : "Submit"}
+                </Button>
+              )}
+            </>
           )}
         </div>
       </div>

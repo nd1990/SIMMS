@@ -168,6 +168,7 @@ model Employee {
   department  String?
   designation String?
   designationGrade String?
+  stampPath   String?
   status      Boolean  @default(true)
   joiningDate DateTime?
   createdAt   DateTime @default(now())

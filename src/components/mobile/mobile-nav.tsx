@@ -20,7 +20,7 @@ export function MobileNav({ unread }: { unread?: number }) {
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-gradient-to-r from-white via-sky-50 to-teal-50 shadow-sm">
-        <div className="mx-auto flex h-14 max-w-xl items-center justify-between px-4">
+        <div className="mx-auto flex h-14 max-w-xl items-center justify-between px-4 md:max-w-3xl">
           <Link href="/m/home" className="flex items-center gap-2.5">
             <BrandLogo className="h-8" />
             <span className="leading-tight">
@@ -49,7 +49,7 @@ export function MobileNav({ unread }: { unread?: number }) {
       </header>
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white shadow-[0_-4px_12px_rgba(15,23,42,0.05)]">
-        <div className={`mx-auto grid max-w-xl grid-cols-4 pb-[env(safe-area-inset-bottom)]`}>
+        <div className={`mx-auto grid max-w-xl grid-cols-4 pb-[env(safe-area-inset-bottom)] md:max-w-3xl`}>
           {items.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + "/");
             return (

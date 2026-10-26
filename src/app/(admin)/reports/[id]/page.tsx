@@ -28,7 +28,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
       company: { select: { name: true, code: true } },
       site: { select: { name: true, switchYardName: true } },
       project: { select: { name: true } },
-      testedBy: { select: { name: true, designation: true } },
+      testedBy: { select: { name: true, designation: true, stampPath: true } },
       template: { select: { name: true } },
       ctSpecifications: true,
       ctCores: true,
@@ -149,7 +149,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
 
       <div>
         <h2 className="mb-3 text-sm font-semibold text-slate-900 dark:text-white">Test data</h2>
-        <ReportSections payload={payload} />
+        <ReportSections payload={payload} testedByStamp={report.testedBy?.stampPath} />
       </div>
     </div>
   );

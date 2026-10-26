@@ -9,6 +9,7 @@ import {
   calcRatioError,
   fmt,
 } from "@/lib/power-tr-types";
+import { stampForName, withBasePath } from "@/lib/employee-stamps";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -73,11 +74,11 @@ function humanize(key: string) {
     .trim();
 }
 
-export function ReportSections({ payload }: { payload: ReportPayload }) {
+export function ReportSections({ payload, testedByStamp }: { payload: ReportPayload; testedByStamp?: string | null }) {
   const sections: { title: string; node: React.ReactNode }[] = [];
 
   if (payload.templateCode === POWER_TR_TEMPLATE_CODE && payload.powerTr) {
-    return <PowerTrSections data={payload.powerTr} />;
+    return <PowerTrSections data={payload.powerTr} testedByStamp={testedByStamp} />;
   }
 
   if (payload.templateCode === "66KV_CT") {
@@ -142,7 +143,7 @@ function MiniTable({ headers, rows }: { headers: string[]; rows: (string | undef
   );
 }
 
-function PowerTrSections({ data }: { data: PowerTrData }) {
+function PowerTrSections({ data, testedByStamp }: { data: PowerTrData; testedByStamp?: string | null }) {
   const h = data.header;
   const hdr: [string, string][] = [
     ["Party Name", h.partyName],
@@ -294,7 +295,18 @@ function PowerTrSections({ data }: { data: PowerTrData }) {
     },
     {
       title: "Signatures",
-      node: <KeyValueGrid data={{ "Tested By": data.signatures.testedBy, "Witness By": data.signatures.witnessBy }} />,
+      node: (
+        <div className="space-y-3">
+          {stampForName(data.signatures.testedBy, testedByStamp) ? (
+            <img
+              src={withBasePath(stampForName(data.signatures.testedBy, testedByStamp)!)}
+              alt="Stamp"
+              className="h-16 w-auto object-contain"
+            />
+          ) : null}
+          <KeyValueGrid data={{ "Tested By": data.signatures.testedBy, "Witness By": data.signatures.witnessBy }} />
+        </div>
+      ),
     },
   ];
 

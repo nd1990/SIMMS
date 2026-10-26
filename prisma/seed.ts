@@ -164,56 +164,10 @@ async function main() {
 
   // ---- Testing templates ----
   await prisma.testingTemplate.upsert({
-    where: { code: "66KV_CT" },
-    update: { isActive: true },
-    create: {
-      name: "66 KV CT Testing Report",
-      code: "66KV_CT",
-      version: "1.0",
-      config: {
-        tests: [
-          "CT Polarity Test",
-          "CT Core Identification Test",
-          "CT Ratio Test",
-          "CT Secondary Winding Resistance",
-          "CT Series Test",
-          "CT Insulation Resistance Measurement",
-          "CT Knee Point Test",
-        ],
-      },
-    },
-  });
-  await prisma.testingTemplate.upsert({
-    where: { code: "66KV_LINE_CT" },
-    update: { isActive: true },
-    create: {
-      name: "66 KV Line CT Testing Report",
-      code: "66KV_LINE_CT",
-      version: "1.0",
-      config: {
-        sections: [
-          "general",
-          "specification",
-          "core",
-          "capacitance",
-          "insulation",
-          "winding",
-          "polarity",
-          "core_identification",
-          "ratio",
-          "knee_point",
-          "connection",
-          "series",
-          "metering",
-        ],
-      },
-    },
-  });
-  await prisma.testingTemplate.upsert({
     where: { code: "POWER_TR_STAR_STAR" },
     update: { isActive: true },
     create: {
-      name: "Power Transformer (Star-Star) Testing Report",
+      name: "Power TR Testing Report (Star-Star TR)",
       code: "POWER_TR_STAR_STAR",
       version: "1.0",
       config: {

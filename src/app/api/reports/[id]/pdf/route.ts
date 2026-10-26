@@ -21,7 +21,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext) {
     include: {
       company: { select: { name: true, code: true } },
       site: { select: { name: true, switchYardName: true } },
-      testedBy: { select: { name: true, designation: true, designationGrade: true } },
+      testedBy: { select: { name: true, designation: true, designationGrade: true, stampPath: true } },
       approvals: {
         where: { action: "APPROVE" },
         orderBy: { createdAt: "desc" },
@@ -68,6 +68,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext) {
         switchYardName: report.switchYardName ?? report.site?.switchYardName,
         testingDate: report.testingDate ? report.testingDate.toLocaleDateString("en-IN") : null,
         testedByName: report.testedBy?.name,
+        testedByStamp: report.testedBy?.stampPath,
         testedByDesignation: report.testedBy?.designation,
         approvedByName: approved?.approvedBy?.name,
         approvedByDesignation: approved?.approvedBy?.designation ?? undefined,

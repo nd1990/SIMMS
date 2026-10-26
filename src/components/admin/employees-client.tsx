@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Edit, Plus, Trash2, Users } from "lucide-react";
+import { Edit, Plus, Trash2, Upload, Users, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
 import { employeeSchema } from "@/lib/validations";
 import { getErrorMessage } from "@/lib/utils";
+import { withBasePath } from "@/lib/employee-stamps";
 import { roleLabel } from "@/lib/permissions";
 import type { Role } from "@prisma/client";
 
@@ -31,6 +32,7 @@ type Employee = {
   department: string | null;
   designation: string | null;
   designationGrade: string | null;
+  stampPath: string | null;
   status: boolean;
   joiningDate: string | null;
   user?: { id: string; status: string } | null;
@@ -55,6 +57,8 @@ export function EmployeesClient({
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Employee | null>(null);
   const [loading, setLoading] = useState(false);
+  const [stampPath, setStampPath] = useState<string>("");
+  const [stampUploading, setStampUploading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -83,7 +87,7 @@ export function EmployeesClient({
   async function submit(values: EmployeeForm) {
     setLoading(true);
     try {
-      const payload: Record<string, unknown> = { ...values };
+      const payload: Record<string, unknown> = { ...values, stampPath };
       if (!values.createLogin || !values.password) delete payload.password;
       if (hasLogin) delete payload.createLogin;
       const url = editing ? `/api/employees/${editing.id}` : "/api/employees";
@@ -108,6 +112,7 @@ export function EmployeesClient({
 
   function openCreate() {
     setEditing(null);
+    setStampPath("");
     form.reset({
       name: "",
       code: "",
@@ -128,6 +133,7 @@ export function EmployeesClient({
 
   function openEdit(employee: Employee) {
     setEditing(employee);
+    setStampPath(employee.stampPath ?? "");
     form.reset({
       name: employee.name,
       code: employee.code,
@@ -157,6 +163,23 @@ export function EmployeesClient({
       router.refresh();
     } catch (e) {
       toast("error", getErrorMessage(e));
+    }
+  }
+
+  async function handleStampUpload(file: File) {
+    setStampUploading(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/api/uploads", { method: "POST", body });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Upload failed");
+      setStampPath(json.data.path as string);
+      toast("success", "Stamp uploaded");
+    } catch (e) {
+      toast("error", getErrorMessage(e));
+    } finally {
+      setStampUploading(false);
     }
   }
 
@@ -344,6 +367,51 @@ export function EmployeesClient({
               <Label htmlFor="e-joining">Joining date</Label>
               <Input id="e-joining" type="date" {...form.register("joiningDate")} />
             </div>
+          </div>
+
+          <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Signature stamp
+            </p>
+            <div className="flex items-center gap-4">
+              {stampPath ? (
+                <img
+                  src={withBasePath(stampPath)}
+                  alt="Stamp preview"
+                  className="h-16 w-auto rounded border border-slate-200 bg-white object-contain dark:border-slate-700"
+                />
+              ) : (
+                <div className="flex h-16 w-20 items-center justify-center rounded border border-dashed border-slate-300 text-[10px] text-slate-400 dark:border-slate-600">
+                  No stamp
+                </div>
+              )}
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+                  <Upload className="h-3.5 w-3.5" />
+                  {stampUploading ? "Uploading…" : stampPath ? "Change stamp" : "Upload stamp"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    className="hidden"
+                    disabled={stampUploading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleStampUpload(file);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+                {stampPath && (
+                  <Button type="button" variant="ghost" size="sm" className="text-red-500" onClick={() => setStampPath("")}>
+                    <X className="h-3.5 w-3.5" />
+                    Remove
+                  </Button>
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Shown next to the Tested By signature on Power Transformer reports. PNG/JPEG/WebP, max 2 MB.
+            </p>
           </div>
 
           {canCreateLogin && (

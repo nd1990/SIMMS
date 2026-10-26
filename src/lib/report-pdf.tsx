@@ -198,6 +198,7 @@ export function ReportDocument({
     switchYardName?: string | null;
     testingDate?: string | null;
     testedByName?: string | null;
+    testedByStamp?: string | null;
     testedByDesignation?: string | null;
     approvedByName?: string | null;
     approvedByDesignation?: string | null;
@@ -221,6 +222,7 @@ export function ReportDocument({
           siteName: meta.siteName,
           testingDate: meta.testingDate,
           testedByName: meta.testedByName,
+          testedByStamp: meta.testedByStamp,
         }}
       />
     );
