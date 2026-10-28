@@ -27,7 +27,7 @@ type Employee = {
   email: string;
   mobileNumber: string | null;
   role: Role;
-  companyId: string;
+  companyId?: string;
   company?: { name: string };
   department: string | null;
   designation: string | null;
@@ -70,7 +70,6 @@ export function EmployeesClient({
       email: "",
       mobileNumber: "",
       role: "TECHNICIAN",
-      companyId: companies[0]?.id ?? undefined,
       department: "",
       designation: "",
       designationGrade: "",
@@ -120,7 +119,6 @@ export function EmployeesClient({
       email: "",
       mobileNumber: "",
       role: "TECHNICIAN",
-      companyId: companies[0]?.id ?? undefined,
       department: "",
       designation: "",
       designationGrade: "",
@@ -141,7 +139,6 @@ export function EmployeesClient({
       email: employee.email,
       mobileNumber: employee.mobileNumber ?? "",
       role: employee.role as EmployeeForm["role"],
-      companyId: employee.companyId ?? undefined,
       department: employee.department ?? "",
       designation: employee.designation ?? "",
       designationGrade: employee.designationGrade ?? "",
