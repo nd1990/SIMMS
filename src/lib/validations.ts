@@ -63,7 +63,7 @@ export const employeeSchema = z
     email: z.string().email("Enter a valid email"),
     mobileNumber: z.string().optional(),
     role: z.enum(["COMPANY_ADMIN", "SUPERVISOR", "TECHNICIAN"]).default("TECHNICIAN"),
-    companyId: z.string().optional(),
+    companyId: z.any().optional(),
     department: z.string().optional(),
     designation: z.string().optional(),
     designationGrade: z.string().optional(),
