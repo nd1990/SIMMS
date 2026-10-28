@@ -63,7 +63,7 @@ export const employeeSchema = z
     email: z.string().email("Enter a valid email"),
     mobileNumber: z.string().optional(),
     role: z.enum(["COMPANY_ADMIN", "SUPERVISOR", "TECHNICIAN"]).default("TECHNICIAN"),
-    companyId: z.string().min(1, "Select a company"),
+    companyId: z.string().optional(),
     department: z.string().optional(),
     designation: z.string().optional(),
     designationGrade: z.string().optional(),
@@ -71,7 +71,7 @@ export const employeeSchema = z
     status: z.boolean().default(true),
     joiningDate: z.string().optional(),
     createLogin: z.boolean().default(false),
-    password: z.string().min(6, "Password must be at least 6 characters").optional(),
+    password: z.string().min(6, "Password must at least 6 characters").optional(),
   })
   .superRefine((data, ctx) => {
     if (data.createLogin && !data.password) {

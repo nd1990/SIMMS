@@ -32,8 +32,12 @@ export async function POST(request: NextRequest) {
   const parsed = employeeSchema.safeParse(body);
   if (!parsed.success) return apiError(parsed.error.issues[0]?.message ?? "Invalid data", 400);
 
-  if (user.role !== "MASTER_ADMIN" && parsed.data.companyId !== user.companyId) {
+  const companyId = parsed.data.companyId ?? user.companyId;
+  if (user.role !== "MASTER_ADMIN" && companyId !== user.companyId) {
     return apiError("You can only add employees for your company", 403);
+  }
+  if (!companyId) {
+    return apiError("Company is required", 400);
   }
 
   const dupCode = await prisma.employee.findUnique({ where: { code: parsed.data.code } });
@@ -42,7 +46,7 @@ export async function POST(request: NextRequest) {
   const dupEmail = await prisma.employee.findUnique({ where: { email: parsed.data.email } });
   if (dupEmail) return apiError("An employee with this email already exists", 409);
 
-  const { joiningDate: joiningRaw, createLogin, password, ...rest } = parsed.data;
+  const { joiningDate: joiningRaw, createLogin, password, companyId: _c, ...rest } = parsed.data as any;
 
   if (createLogin) {
     if (!hasPermission(user.role, "users:manage")) {
@@ -56,6 +60,7 @@ export async function POST(request: NextRequest) {
     const created = await tx.employee.create({
       data: {
         ...rest,
+        companyId,
         joiningDate: joiningRaw ? new Date(joiningRaw) : undefined,
       },
     });
