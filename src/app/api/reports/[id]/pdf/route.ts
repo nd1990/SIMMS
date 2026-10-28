@@ -63,7 +63,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext) {
       reportNumber: report.reportNumber,
       payload,
       meta: {
-        companyName: report.company.name,
+        companyName: report.company?.name ?? "General",
         siteName: report.site?.name,
         switchYardName: report.switchYardName ?? report.site?.switchYardName,
         testingDate: report.testingDate ? report.testingDate.toLocaleDateString("en-IN") : null,

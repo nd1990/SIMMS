@@ -71,7 +71,7 @@ export default async function ReportEditPage({ params }: { params: Promise<{ id:
             reportNumber: report.reportNumber,
             testingType: report.testingType,
             siteName: report.site?.name ?? null,
-            companyName: report.company.name,
+            companyName: report.company?.name ?? "General",
             testedByName: report.testedBy?.name ?? null,
           }}
           initialPayload={payload}

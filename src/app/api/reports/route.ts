@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   const where: Record<string, unknown> = {};
   if (status) where.status = status;
   if (mine || ownOnly) where.testedById = user.employeeId ?? "none";
-  else if (user.role !== "MASTER_ADMIN") where.companyId = user.companyId ?? "none";
+  else if (user.role !== "MASTER_ADMIN" && user.companyId) where.companyId = user.companyId;
 
   // Map incoming template code to a report filter
   if (templateCode) {
@@ -113,16 +113,62 @@ export async function POST(request: NextRequest) {
 
   if (!template) return apiError("Unknown testing template", 404);
 
-  const companyId = user.companyId;
-  if (!companyId) return apiError("User is not linked to a company", 400);
-  const company = await prisma.company.findUnique({ where: { id: companyId } });
+  let companyId = user.companyId;
+
+  if (!companyId && user.employeeId) {
+    const emp = await prisma.employee.findUnique({
+      where: { id: user.employeeId },
+      select: { companyId: true },
+    });
+    companyId = emp?.companyId ?? null;
+  }
+
+  if (!companyId && siteId) {
+    const site = await prisma.site.findUnique({
+      where: { id: siteId },
+      select: { companyId: true },
+    });
+    companyId = site?.companyId ?? null;
+  }
+
+  if (!companyId && projectId) {
+    const proj = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { companyId: true },
+    });
+    companyId = proj?.companyId ?? null;
+  }
+
+  let company = companyId ? await prisma.company.findUnique({ where: { id: companyId } }) : null;
+
+  if (!company) {
+    company = await prisma.company.findFirst({
+      where: { status: true },
+      orderBy: { createdAt: "asc" },
+    });
+    if (!company) {
+      company = await prisma.company.findFirst({
+        orderBy: { createdAt: "asc" },
+      });
+    }
+    if (!company) {
+      company = await prisma.company.create({
+        data: {
+          name: "Main Company",
+          code: "GEN",
+          status: true,
+        },
+      });
+    }
+    companyId = company.id;
+  }
 
   const reportNumber = await generateReportNumber(company?.code ?? "GEN");
 
   const report = await prisma.testingReport.create({
     data: {
       reportNumber,
-      companyId,
+      companyId: companyId!,
       projectId: projectId || null,
       siteId: siteId || null,
       templateId: template.id,

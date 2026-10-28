@@ -123,7 +123,7 @@ export default async function ReportDetailPage({ params }: { params: Promise<{ i
             <CardTitle className="text-sm font-semibold">Report information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <Row label="Company" value={report.company.name} />
+            <Row label="Company" value={report.company?.name ?? "—"} />
             <Row label="Project" value={report.project?.name ?? "—"} />
             <Row label="Site" value={report.site?.name ?? "—"} />
             <Row label="Test date" value={report.testingDate ? formatDate(report.testingDate) : "—"} />
