@@ -88,6 +88,7 @@ export function EmployeesClient({
     setLoading(true);
     try {
       const payload: Record<string, unknown> = { ...values, stampPath };
+      if (!payload.companyId) delete payload.companyId;
       if (!values.createLogin || !values.password) delete payload.password;
       if (hasLogin) delete payload.createLogin;
       const url = editing ? `/api/employees/${editing.id}` : "/api/employees";
