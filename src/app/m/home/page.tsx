@@ -18,11 +18,17 @@ export default async function MobileHomePage() {
   const userId = session.user.id;
   const employeeId = session.user.employeeId;
 
-  const [user, mySubmitted, corrections, myReports, sites] = await Promise.all([
+  const [user, employee, mySubmitted, corrections, myReports, sites] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { name: true, role: true },
     }),
+    employeeId
+      ? prisma.employee.findUnique({
+          where: { id: employeeId },
+          select: { name: true },
+        })
+      : null,
     prisma.testingReport.count({
       where: { testedById: employeeId ?? "none", status: { in: ["SUBMITTED", "APPROVED", "GENERATED"] } },
     }),
@@ -39,8 +45,7 @@ export default async function MobileHomePage() {
     }),
   ]);
 
-  const name = user?.name ?? "Technician";
-  const first = name.split(" ")[0];
+  const name = employee?.name || user?.name || "Technician";
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
@@ -55,7 +60,7 @@ export default async function MobileHomePage() {
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium uppercase tracking-wider text-sky-300">{greeting}</p>
-            <h1 className="truncate text-xl font-bold">{first} 👋</h1>
+            <h1 className="truncate text-xl font-bold">{name} 👋</h1>
             <p className="truncate text-xs text-slate-300">{formatDate(new Date().toISOString())} · Field testing console</p>
           </div>
         </div>
