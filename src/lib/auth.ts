@@ -9,6 +9,7 @@ import { withBase } from "@/lib/base-path";
 const SESSION_REFRESH_MS = 30_000;
 
 export const authOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   trustHost: true,
   session: {
     strategy: "jwt",
