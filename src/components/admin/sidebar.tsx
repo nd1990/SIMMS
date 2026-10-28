@@ -26,7 +26,6 @@ import { BrandLogo } from "@/components/brand-logo";
 const mainNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/projects", label: "Projects", icon: FolderKanban },
-  { href: "/sites", label: "Sites", icon: MapPin },
   { href: "/employees", label: "Employees", icon: Users },
   { href: "/reports", label: "Testing Reports", icon: FileText },
   { href: "/analytics", label: "Reports & Analytics", icon: BarChart3 },

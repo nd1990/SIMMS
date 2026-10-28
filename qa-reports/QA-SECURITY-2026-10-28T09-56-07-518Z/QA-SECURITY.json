@@ -1,0 +1,99 @@
+{
+  "summary": {
+    "pass": 0,
+    "fail": 1
+  },
+  "results": [
+    {
+      "name": "TypeScript",
+      "status": "FAIL",
+      "err": "Command failed: npx tsc --noEmit",
+      "at": "2026-10-28T09:59:20.651Z"
+    },
+    {
+      "name": "Auth Session",
+      "status": 404,
+      "at": "2026-10-28T10:00:15.342Z"
+    },
+    {
+      "name": "Admin /dashboard",
+      "status": 404,
+      "at": "2026-10-28T10:00:32.247Z"
+    },
+    {
+      "name": "Admin /projects",
+      "status": 404,
+      "at": "2026-10-28T10:00:48.706Z"
+    },
+    {
+      "name": "Admin /employees",
+      "status": 404,
+      "at": "2026-10-28T10:00:57.131Z"
+    },
+    {
+      "name": "Admin /sites",
+      "status": 404,
+      "at": "2026-10-28T10:01:03.140Z"
+    },
+    {
+      "name": "Admin /reports",
+      "status": 404,
+      "at": "2026-10-28T10:01:07.408Z"
+    },
+    {
+      "name": "Admin /approvals",
+      "status": 404,
+      "at": "2026-10-28T10:01:12.337Z"
+    },
+    {
+      "name": "Admin /notifications",
+      "status": 404,
+      "at": "2026-10-28T10:01:15.688Z"
+    },
+    {
+      "name": "Admin /settings",
+      "status": 404,
+      "at": "2026-10-28T10:01:20.181Z"
+    },
+    {
+      "name": "Mobile /m/home",
+      "status": 404,
+      "at": "2026-10-28T10:01:23.007Z"
+    },
+    {
+      "name": "Mobile /m/reports",
+      "status": 404,
+      "at": "2026-10-28T10:01:24.971Z"
+    },
+    {
+      "name": "Mobile /m/drafts",
+      "status": 404,
+      "at": "2026-10-28T10:01:33.006Z"
+    },
+    {
+      "name": "Mobile /m/notifications",
+      "status": 404,
+      "at": "2026-10-28T10:01:36.421Z"
+    },
+    {
+      "name": "Mobile /m/downloads",
+      "status": 404,
+      "at": "2026-10-28T10:01:37.915Z"
+    },
+    {
+      "name": "Mobile /m/profile",
+      "status": 404,
+      "at": "2026-10-28T10:01:39.560Z"
+    },
+    {
+      "name": "API Projects List",
+      "status": 404,
+      "at": "2026-10-28T10:01:41.102Z"
+    },
+    {
+      "name": "Unauth Session",
+      "status": 404,
+      "at": "2026-10-28T10:01:41.225Z"
+    }
+  ]
+}
