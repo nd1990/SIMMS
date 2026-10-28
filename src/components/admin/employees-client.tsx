@@ -330,16 +330,6 @@ export function EmployeesClient({
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="e-company">Company *</Label>
-              <Select {...form.register("companyId")}>
-                {companies.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-1.5">
               <Label htmlFor="e-role">Role *</Label>
               <Select {...form.register("role")}>
                 <option value="TECHNICIAN">Field Technician</option>
