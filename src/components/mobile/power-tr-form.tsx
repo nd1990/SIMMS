@@ -845,40 +845,33 @@ export function PowerTrForm({
             const nn = toNum(vg.nn);
             const yb = toNum(vg.yb);
             const rnUpper = toNum(vg.rnUpper);
+
+            // YNyn0 is confirmed when either relation holds: Bb = Yy OR Rn + nN = RN.
+            const tol = 0.01;
+            const bbMatchesYy = yy !== null && bb !== null && Math.abs(bb - yy) < tol;
+            const rnNnMatchesRn = rn !== null && nn !== null && rnUpper !== null && Math.abs(rn + nn - rnUpper) < tol;
             const allFilled = yy !== null && rn !== null && bb !== null && nn !== null && yb !== null && rnUpper !== null;
-            const isConfirmed = allFilled && (Math.abs(bb - yy) < 0.01 || Math.abs((rn + nn) - rnUpper) < 0.01);
-            const okClass = isConfirmed ? "border-emerald-500 focus-visible:ring-emerald-500" : "";
+            const isConfirmed = allFilled && (bbMatchesYy || rnNnMatchesRn);
+
             return (
               <>
                 <div className="grid grid-cols-2 gap-2">
-                  <Field label="Yy (V)">
-                    <Input inputMode="decimal" value={vg.yy} onChange={(e) => setVector("yy", e.target.value)} className={okClass} />
-                  </Field>
-                  <Field label="Rn (V)">
-                    <Input inputMode="decimal" value={vg.rn} onChange={(e) => setVector("rn", e.target.value)} className={okClass} />
-                  </Field>
-                  <Field label="Bb (V)">
-                    <Input inputMode="decimal" value={vg.bb} onChange={(e) => setVector("bb", e.target.value)} className={okClass} />
-                  </Field>
-                  <Field label="nN (V)">
-                    <Input inputMode="decimal" value={vg.nn} onChange={(e) => setVector("nn", e.target.value)} className={okClass} />
-                  </Field>
-                  <Field label="Yb (V)">
-                    <Input inputMode="decimal" value={vg.yb} onChange={(e) => setVector("yb", e.target.value)} className={okClass} />
-                  </Field>
-                  <Field label="RN (V)">
-                    <Input inputMode="decimal" value={vg.rnUpper} onChange={(e) => setVector("rnUpper", e.target.value)} className={okClass} />
-                  </Field>
+                  <VectorField label="Yy (V)" value={vg.yy} ok={bbMatchesYy} onChange={(v) => setVector("yy", v)} />
+                  <VectorField label="Rn (V)" value={vg.rn} ok={rnNnMatchesRn} onChange={(v) => setVector("rn", v)} />
+                  <VectorField label="Bb (V)" value={vg.bb} ok={bbMatchesYy} onChange={(v) => setVector("bb", v)} />
+                  <VectorField label="nN (V)" value={vg.nn} ok={rnNnMatchesRn} onChange={(v) => setVector("nn", v)} />
+                  <VectorField label="Yb (V)" value={vg.yb} ok={isConfirmed} onChange={(v) => setVector("yb", v)} />
+                  <VectorField label="RN (V)" value={vg.rnUpper} ok={rnNnMatchesRn} onChange={(v) => setVector("rnUpper", v)} />
                 </div>
                 <p
                   className={cn(
                     "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs",
                     isConfirmed
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      ? "border-emerald-300 bg-emerald-50 font-semibold text-emerald-700"
                       : "border-slate-200 bg-slate-50 text-slate-600"
                   )}
                 >
-                  {isConfirmed && <CheckCircle2 className="h-4 w-4" />}
+                  <CheckCircle2 className={cn("h-4 w-4 shrink-0", isConfirmed ? "text-emerald-600" : "text-slate-400")} />
                   <span>YNyn0 : Bb = Yy &nbsp;OR&nbsp; Rn + nN = RN &nbsp;→&nbsp; Result: YNyn0 Vector Group is Confirmed.</span>
                 </p>
               </>
@@ -1135,6 +1128,38 @@ export function PowerTrForm({
         />
       )}
     </div>
+  );
+}
+
+// Vector-group reading: turns green with a tick as soon as its relation matches.
+function VectorField({
+  label,
+  value,
+  ok,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  ok: boolean;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Field label={label}>
+      <div className="relative">
+        <Input
+          inputMode="decimal"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={cn(
+            "pr-8",
+            ok && "border-emerald-500 bg-emerald-50 font-semibold text-emerald-700 focus-visible:ring-emerald-500"
+          )}
+        />
+        {ok ? (
+          <CheckCircle2 className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-600" />
+        ) : null}
+      </div>
+    </Field>
   );
 }
 

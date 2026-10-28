@@ -78,7 +78,12 @@ export function PUT(request: NextRequest, ctx: RouteContext) {
 
     if (body?.payload && (report.testedById === user.employeeId || canEdit)) {
       try {
-        await persistReportPayload(id, body.payload);
+        const payload = { ...body.payload };
+        // A partial payload (no templateCode) used to be saved as if the report
+        // were a CT report, wiping the stored sheets. Fall back to the type the
+        // report was created with.
+        if (!payload.templateCode) payload.templateCode = report.testingType;
+        await persistReportPayload(id, payload);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         console.error(`[reports/${id}] persistReportPayload failed:`, err);

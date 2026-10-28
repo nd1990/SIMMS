@@ -1,0 +1,260 @@
+{
+  "summary": {
+    "pass": 2,
+    "fail": 0,
+    "skip": 0,
+    "total": 48
+  },
+  "results": [
+    {
+      "name": "tsc",
+      "status": "PASS",
+      "at": "2026-10-28T06:11:04.166Z"
+    },
+    {
+      "name": "auth.session",
+      "status": 200,
+      "at": "2026-10-28T06:11:05.135Z"
+    },
+    {
+      "name": "admin:/dashboard",
+      "status": 200,
+      "at": "2026-10-28T06:11:15.927Z"
+    },
+    {
+      "name": "admin:/projects",
+      "status": 200,
+      "at": "2026-10-28T06:11:19.193Z"
+    },
+    {
+      "name": "admin:/employees",
+      "status": 200,
+      "at": "2026-10-28T06:11:23.159Z"
+    },
+    {
+      "name": "admin:/sites",
+      "status": 200,
+      "at": "2026-10-28T06:11:27.212Z"
+    },
+    {
+      "name": "admin:/reports",
+      "status": 200,
+      "at": "2026-10-28T06:11:29.330Z"
+    },
+    {
+      "name": "admin:/approvals",
+      "status": 200,
+      "at": "2026-10-28T06:11:31.531Z"
+    },
+    {
+      "name": "admin:/notifications",
+      "status": 200,
+      "at": "2026-10-28T06:11:36.614Z"
+    },
+    {
+      "name": "admin:/settings",
+      "status": 200,
+      "at": "2026-10-28T06:12:53.553Z"
+    },
+    {
+      "name": "admin:/analytics",
+      "status": 200,
+      "at": "2026-10-28T06:12:55.852Z"
+    },
+    {
+      "name": "mobile:/m/home",
+      "status": 200,
+      "at": "2026-10-28T06:12:56.089Z"
+    },
+    {
+      "name": "mobile:/m/reports",
+      "status": 200,
+      "at": "2026-10-28T06:12:58.129Z"
+    },
+    {
+      "name": "mobile:/m/drafts",
+      "status": 200,
+      "at": "2026-10-28T06:12:59.309Z"
+    },
+    {
+      "name": "mobile:/m/notifications",
+      "status": 200,
+      "at": "2026-10-28T06:13:06.347Z"
+    },
+    {
+      "name": "mobile:/m/downloads",
+      "status": 200,
+      "at": "2026-10-28T06:13:07.505Z"
+    },
+    {
+      "name": "mobile:/m/profile",
+      "status": 200,
+      "at": "2026-10-28T06:13:08.514Z"
+    },
+    {
+      "name": "api.projects.list",
+      "status": 200,
+      "at": "2026-10-28T06:13:09.179Z"
+    },
+    {
+      "name": "api.projects.files.list",
+      "status": 200,
+      "at": "2026-10-28T06:13:12.619Z"
+    },
+    {
+      "name": "get.POWER_TR_STAR_STAR",
+      "status": 200,
+      "at": "2026-10-28T06:13:12.907Z"
+    },
+    {
+      "name": "save.POWER_TR_STAR_STAR",
+      "status": 200,
+      "at": "2026-10-28T06:13:13.004Z"
+    },
+    {
+      "name": "edit-page.POWER_TR_STAR_STAR",
+      "status": 200,
+      "at": "2026-10-28T06:13:13.423Z"
+    },
+    {
+      "name": "pdf.POWER_TR_STAR_STAR",
+      "status": 200,
+      "size": 54453,
+      "at": "2026-10-28T06:13:18.908Z"
+    },
+    {
+      "name": "get.CB_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:19.517Z"
+    },
+    {
+      "name": "save.CB_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:19.586Z"
+    },
+    {
+      "name": "edit-page.CB_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:20.042Z"
+    },
+    {
+      "name": "pdf.CB_66KV",
+      "status": 200,
+      "size": 52446,
+      "at": "2026-10-28T06:13:20.178Z"
+    },
+    {
+      "name": "get.MCT_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:20.337Z"
+    },
+    {
+      "name": "save.MCT_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:20.425Z"
+    },
+    {
+      "name": "edit-page.MCT_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:20.676Z"
+    },
+    {
+      "name": "pdf.MCT_66KV",
+      "status": 200,
+      "size": 53071,
+      "at": "2026-10-28T06:13:20.863Z"
+    },
+    {
+      "name": "get.PCT_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:21.026Z"
+    },
+    {
+      "name": "save.PCT_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:21.133Z"
+    },
+    {
+      "name": "edit-page.PCT_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:21.474Z"
+    },
+    {
+      "name": "pdf.PCT_66KV",
+      "status": 200,
+      "size": 52993,
+      "at": "2026-10-28T06:13:21.614Z"
+    },
+    {
+      "name": "get.MPT_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:21.802Z"
+    },
+    {
+      "name": "save.MPT_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:21.880Z"
+    },
+    {
+      "name": "edit-page.MPT_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:22.150Z"
+    },
+    {
+      "name": "pdf.MPT_66KV",
+      "status": 200,
+      "size": 57878,
+      "at": "2026-10-28T06:13:22.374Z"
+    },
+    {
+      "name": "get.PPT_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:22.518Z"
+    },
+    {
+      "name": "save.PPT_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:22.592Z"
+    },
+    {
+      "name": "edit-page.PPT_66KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:22.916Z"
+    },
+    {
+      "name": "pdf.PPT_66KV",
+      "status": 200,
+      "size": 58478,
+      "at": "2026-10-28T06:13:23.196Z"
+    },
+    {
+      "name": "get.RELAY_66_33KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:23.350Z"
+    },
+    {
+      "name": "save.RELAY_66_33KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:23.443Z"
+    },
+    {
+      "name": "edit-page.RELAY_66_33KV",
+      "status": 200,
+      "at": "2026-10-28T06:13:23.762Z"
+    },
+    {
+      "name": "pdf.RELAY_66_33KV",
+      "status": 200,
+      "size": 52041,
+      "at": "2026-10-28T06:13:23.901Z"
+    },
+    {
+      "name": "employee.rename.sync",
+      "status": "PASS",
+      "puStatus": 200,
+      "loginName": "Praful Vachhani",
+      "expected": "Praful Vachhani",
+      "at": "2026-10-28T06:13:24.049Z"
+    }
+  ]
+}
