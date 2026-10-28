@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Edit, Plus, Trash2, FolderKanban } from "lucide-react";
+import { Edit, Plus, Trash2, FolderKanban, FolderOpen } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
 import { Dialog } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -146,11 +145,7 @@ export function ProjectsClient({
               <TableRow>
                 <TableHead>Project</TableHead>
                 <TableHead>Code</TableHead>
-                <TableHead className="hidden md:table-cell">Company</TableHead>
-                <TableHead className="hidden lg:table-cell">EPC</TableHead>
-                <TableHead className="hidden lg:table-cell">Sites</TableHead>
                 <TableHead className="hidden lg:table-cell">Reports</TableHead>
-                <TableHead>Status</TableHead>
                 {canManage && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
@@ -166,24 +161,14 @@ export function ProjectsClient({
                       {project.code}
                     </span>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">{project.company.name}</TableCell>
-                  <TableCell className="hidden lg:table-cell">{project.epcCompany ?? "—"}</TableCell>
-                  <TableCell className="hidden lg:table-cell">{project._count.sites}</TableCell>
                   <TableCell className="hidden lg:table-cell">{project._count.reports}</TableCell>
-                  <TableCell>
-                    <span
-                      className={
-                        project.status
-                          ? "rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700"
-                          : "rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-500 dark:bg-slate-700 dark:text-slate-300"
-                      }
-                    >
-                      {project.status ? "Active" : "Inactive"}
-                    </span>
-                  </TableCell>
                   {canManage && (
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => router.push(`/projects/${project.id}/reports`)}>
+                          <FolderOpen className="h-3.5 w-3.5" />
+                          Manage Files
+                        </Button>
                         <Button variant="ghost" size="sm" onClick={() => openEdit(project)}>
                           <Edit className="h-3.5 w-3.5" />
                           Edit
@@ -220,16 +205,8 @@ export function ProjectsClient({
         }
       >
         <form onSubmit={form.handleSubmit(submit)} className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="p-company">Company *</Label>
-            <Select {...form.register("companyId")}>
-              {companies.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
-          </div>
+          {/* Company is assigned automatically; it is not part of the project form. */}
+          <input type="hidden" {...form.register("companyId")} />
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="p-name">Project name *</Label>

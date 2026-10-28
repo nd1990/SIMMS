@@ -20,12 +20,26 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
 import { ReportSections } from "@/components/admin/report-sections";
 import { PowerTrForm, SHEET_TABS, type SheetId } from "@/components/mobile/power-tr-form";
+import { CbForm, MctForm, PctForm, PtForm } from "@/components/mobile/equipment-forms";
 import { PdfIcon } from "@/components/pdf-icon";
 import { getErrorMessage } from "@/lib/utils";
 import {
   POWER_TR_TEMPLATE_CODE,
   validatePowerTrData,
 } from "@/lib/power-tr-types";
+import {
+  CB_TEMPLATE_CODE,
+  MCT_TEMPLATE_CODE,
+  MPT_TEMPLATE_CODE,
+  PCT_TEMPLATE_CODE,
+  PPT_TEMPLATE_CODE,
+  buildPtDefaultPayload,
+  normalizePtData,
+  validateCbData,
+  validateMctData,
+  validatePctData,
+  type PtData,
+} from "@/lib/equipment-types";
 import {
   getOfflineSave,
   isOnline,
@@ -168,6 +182,24 @@ export function ReportForm({
 
   const isTemplate1 = payload.templateCode === "66KV_CT";
   const isPowerTr = payload.templateCode === POWER_TR_TEMPLATE_CODE;
+  const isPt = payload.templateCode === MPT_TEMPLATE_CODE || payload.templateCode === PPT_TEMPLATE_CODE;
+  const isCb = payload.templateCode === CB_TEMPLATE_CODE;
+  const isMct = payload.templateCode === MCT_TEMPLATE_CODE;
+  const isPct = payload.templateCode === PCT_TEMPLATE_CODE;
+  const isEquipment = isCb || isMct || isPct || isPt;
+  const templateLabel = isPowerTr
+    ? "Power Transformer Testing Report"
+    : isCb
+    ? "66 KV CB Testing Report"
+    : isMct
+    ? "66 KV MCT Testing Report"
+    : isPct
+    ? "66 KV PCT Testing Report"
+    : isPt
+    ? payload.templateCode === PPT_TEMPLATE_CODE
+      ? "66 KV BUS PT Testing Report"
+      : "66 KV METERING PT Testing Report"
+    : "CT Testing Report";
   const editable = canEdit;
 
   // Power Transformer multi-sheet navigation. The active tab lives here so the
@@ -196,6 +228,21 @@ export function ReportForm({
       // sheet is never sent for approval.
       if (submit && isPowerTr && payload.powerTr) {
         const problems = validatePowerTrData(payload.powerTr);
+        if (problems.length > 0) {
+          toast("error", problems.slice(0, 3).join(" "));
+          setBusy(null);
+          return;
+        }
+      }
+
+      if (submit) {
+        const problems = isCb && payload.cb
+          ? validateCbData(payload.cb)
+          : isMct && payload.mct
+          ? validateMctData(payload.mct)
+          : isPct && payload.pct
+          ? validatePctData(payload.pct)
+          : [];
         if (problems.length > 0) {
           toast("error", problems.slice(0, 3).join(" "));
           setBusy(null);
@@ -376,7 +423,7 @@ export function ReportForm({
         <div className="absolute -right-6 -top-8 h-32 w-32 rounded-full bg-sky-500/20 blur-2xl" />
         <div className="relative">
           <p className="text-xs font-medium uppercase tracking-wide text-sky-300">
-            {isPowerTr ? "Power TR Testing Report (Star-Star TR)" : "CT Testing Report"}
+            {templateLabel}
           </p>
           <h1 className="mt-0.5 text-lg font-bold">{report.reportNumber}</h1>
           <p className="mt-1 text-xs text-slate-300">{report.siteName ?? "No site"} · {report.testingType.replace(/_/g, " ")}</p>
@@ -416,6 +463,20 @@ export function ReportForm({
           tab={powerTrTab}
           onTabChange={setPowerTrTab}
         />
+      ) : isCb && payload.cb ? (
+        <CbForm data={payload.cb} onChange={(d) => setPayloadSection("cb", d)} />
+      ) : isMct && payload.mct ? (
+        <MctForm data={payload.mct} onChange={(d) => setPayloadSection("mct", d)} />
+      ) : isPct && payload.pct ? (
+        <PctForm data={payload.pct} onChange={(d) => setPayloadSection("pct", d)} />
+      ) : isPt && (payload.mpt || payload.ppt) ? (
+        <PtForm
+          data={(payload.mpt || payload.ppt) as PtData}
+          isBus={payload.templateCode === PPT_TEMPLATE_CODE}
+          onChange={(d) =>
+            setPayloadSection(payload.templateCode === PPT_TEMPLATE_CODE ? "ppt" : "mpt", d)
+          }
+        />
       ) : (
         <Template2Sections
           payload={payload}
@@ -437,7 +498,7 @@ export function ReportForm({
             <>
               <Button variant="outline" className="h-11 flex-1" disabled={busy !== null} onClick={() => persistAndSubmit(false)}>
                 <Save className="mr-1 h-4 w-4" />
-                {busy === "save" ? "Saving…" : isPowerTr ? "Save" : "Save changes"}
+                {busy === "save" ? "Saving…" : isPowerTr || isEquipment ? "Save" : "Save changes"}
               </Button>
               {canSubmit && (
                 <Button className="h-11 flex-1" disabled={busy !== null || !canSubmit} onClick={() => persistAndSubmit(true)}>

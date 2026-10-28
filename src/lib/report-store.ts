@@ -2,6 +2,17 @@ import { prisma } from "@/lib/prisma";
 import type { ReportPayload, CoreRow, ChecklistRow } from "@/lib/report-types";
 import { buildTemplate2DefaultPayload } from "@/lib/report-types";
 import { POWER_TR_TEMPLATE_CODE, normalizePowerTrData } from "@/lib/power-tr-types";
+import {
+  CB_TEMPLATE_CODE,
+  MCT_TEMPLATE_CODE,
+  MPT_TEMPLATE_CODE,
+  PCT_TEMPLATE_CODE,
+  PPT_TEMPLATE_CODE,
+  normalizeCbData,
+  normalizeMctData,
+  normalizePctData,
+  normalizePtData,
+} from "@/lib/equipment-types";
 import { withDbRetry } from "@/lib/db-retry";
 
 // Replace-style persistence: the payload is the source of truth and is mirrored
@@ -215,6 +226,46 @@ export async function persistReportPayload(reportId: string, payload: ReportPayl
       return;
     }
 
+    if (templateCode === CB_TEMPLATE_CODE) {
+      await prisma.testingReport.update({
+        where: { id: reportId },
+        data: { data: jsonSafe({ templateCode: CB_TEMPLATE_CODE, cb: normalizeCbData(payload.cb) }) as unknown as object },
+      });
+      return;
+    }
+
+    if (templateCode === MCT_TEMPLATE_CODE) {
+      await prisma.testingReport.update({
+        where: { id: reportId },
+        data: { data: jsonSafe({ templateCode: MCT_TEMPLATE_CODE, mct: normalizeMctData(payload.mct) }) as unknown as object },
+      });
+      return;
+    }
+
+    if (templateCode === PCT_TEMPLATE_CODE) {
+      await prisma.testingReport.update({
+        where: { id: reportId },
+        data: { data: jsonSafe({ templateCode: PCT_TEMPLATE_CODE, pct: normalizePctData(payload.pct) }) as unknown as object },
+      });
+      return;
+    }
+
+    if (templateCode === MPT_TEMPLATE_CODE) {
+      await prisma.testingReport.update({
+        where: { id: reportId },
+        data: { data: jsonSafe({ templateCode: MPT_TEMPLATE_CODE, mpt: normalizePtData(payload.mpt, false) }) as unknown as object },
+      });
+      return;
+    }
+
+    if (templateCode === PPT_TEMPLATE_CODE) {
+      await prisma.testingReport.update({
+        where: { id: reportId },
+        data: { data: jsonSafe({ templateCode: PPT_TEMPLATE_CODE, ppt: normalizePtData(payload.ppt, true) }) as unknown as object },
+      });
+      return;
+    }
+
     if (templateCode === "66KV_CT") {
       await replaceList(reportId, checklist, "checklist");
     } else {
@@ -296,6 +347,41 @@ export async function hydrateReportPayload(input: ReportWithRelations): Promise<
     return {
       templateCode,
       powerTr: normalizePowerTrData((data as { powerTr?: unknown }).powerTr as never),
+    } as ReportPayload;
+  }
+
+  if (templateCode === CB_TEMPLATE_CODE) {
+    return {
+      templateCode,
+      cb: normalizeCbData((data as { cb?: unknown }).cb as never),
+    } as ReportPayload;
+  }
+
+  if (templateCode === MCT_TEMPLATE_CODE) {
+    return {
+      templateCode,
+      mct: normalizeMctData((data as { mct?: unknown }).mct as never),
+    } as ReportPayload;
+  }
+
+  if (templateCode === PCT_TEMPLATE_CODE) {
+    return {
+      templateCode,
+      pct: normalizePctData((data as { pct?: unknown }).pct as never),
+    } as ReportPayload;
+  }
+
+  if (templateCode === MPT_TEMPLATE_CODE) {
+    return {
+      templateCode,
+      mpt: normalizePtData((data as { mpt?: unknown }).mpt as never, false),
+    } as ReportPayload;
+  }
+
+  if (templateCode === PPT_TEMPLATE_CODE) {
+    return {
+      templateCode,
+      ppt: normalizePtData((data as { ppt?: unknown }).ppt as never, true),
     } as ReportPayload;
   }
 

@@ -13,9 +13,21 @@ import {
   fmt,
 } from "@/lib/power-tr-types";
 import { stampForName } from "@/lib/employee-stamps";
+import { SignatureBlock, loadStampFile } from "@/lib/pdf-signature";
 
 // Excel-format Power Transformer (Star-Star) test report.
 // Layout follows the seven sheets of "POWER TR TESTING REPORT(STAR STAR TR)".
+
+const letterheadCache = new Map<string, Buffer | null>();
+
+function loadLetterhead(): Buffer | null {
+  const key = "letterhead";
+  if (letterheadCache.has(key)) return letterheadCache.get(key) ?? null;
+  const file = path.join(process.cwd(), "PDFHEADER", "pdf-top-header.jpeg");
+  const buffer = existsSync(file) ? readFileSync(file) : null;
+  letterheadCache.set(key, buffer);
+  return buffer;
+}
 
 const S = StyleSheet.create({
   page: {
@@ -25,7 +37,12 @@ const S = StyleSheet.create({
     fontFamily: "Helvetica",
     color: "#0f172a",
   },
-  topRow: { flexDirection: "row", justifyContent: "space-between", borderBottomWidth: 2, borderBottomColor: "#149f93", paddingBottom: 6, marginBottom: 8 },
+  letterhead: {
+    width: "100%",
+    marginBottom: 0,
+    padding: 0,
+  },
+  topRow: { flexDirection: "row", justifyContent: "space-between", borderBottomWidth: 0, borderBottomColor: "#149f93", paddingBottom: 6, marginBottom: 8 },
   company: { fontSize: 13, fontWeight: "bold", color: "#005b91" },
   topRight: { alignItems: "flex-end" },
   reportTitle: { fontSize: 9, fontWeight: "bold", color: "#005b91" },
@@ -45,10 +62,6 @@ const S = StyleSheet.create({
   th: { backgroundColor: "#f1f5f9", fontSize: 6.5, fontWeight: "bold", paddingHorizontal: 3, paddingVertical: 4, borderRightWidth: 0.5, borderBottomWidth: 0.5, borderColor: "#cbd5e1", textAlign: "center" },
   td: { fontSize: 7.5, paddingHorizontal: 3, paddingVertical: 3, borderRightWidth: 0.5, borderBottomWidth: 0.5, borderColor: "#e2e8f0", textAlign: "center" },
   footer: { marginTop: 6, flexDirection: "row", justifyContent: "space-between" },
-  sigBlock: { flexGrow: 1, paddingRight: 10 },
-  sigLabel: { fontSize: 6.5, color: "#64748b", textTransform: "uppercase" },
-  sigValue: { fontSize: 8, marginTop: 2, borderTopWidth: 0.5, borderTopColor: "#94a3b8", paddingTop: 2 },
-  sigStamp: { width: 54, height: 44, marginVertical: 2 },
   note: { fontSize: 7.5, color: "#475569", marginTop: 3, marginBottom: 3 },
 });
 
@@ -64,16 +77,6 @@ function t(text: string | null | undefined): string {
     .replace(/[“”]/g, '"')
     .replace(/\s+/g, " ")
     .trim();
-}
-
-const stampFileCache = new Map<string, Buffer | null>();
-
-function loadStampBuffer(publicUrl: string): Buffer | null {
-  if (stampFileCache.has(publicUrl)) return stampFileCache.get(publicUrl) ?? null;
-  const file = path.join(process.cwd(), "public", publicUrl.replace(/^\//, ""));
-  const buffer = existsSync(file) ? readFileSync(file) : null;
-  stampFileCache.set(publicUrl, buffer);
-  return buffer;
 }
 
 type Col = { header: string; width: string; align?: "left" | "center" };
@@ -130,30 +133,27 @@ function SubSection({
   );
 }
 
-function SignatureBlock({
+function SignatureArea({
   testedBy,
   witnessBy,
   testedByStamp,
+  submittedBy,
 }: {
   testedBy: string;
   witnessBy: string;
   testedByStamp?: string | null;
+  submittedBy?: string | null;
 }) {
   const stampUrl = stampForName(testedBy, testedByStamp);
-  const stampData = stampUrl ? loadStampBuffer(stampUrl) : null;
 
   return (
-    <View style={S.footer}>
-      <View style={S.sigBlock}>
-        <Text style={S.sigLabel}>Tested By</Text>
-        {stampData ? <Image src={stampData} style={S.sigStamp} /> : null}
-        <Text style={S.sigValue}>{t(testedBy) || "________________"}</Text>
-      </View>
-      <View style={S.sigBlock}>
-        <Text style={S.sigLabel}>Witness By</Text>
-        <Text style={S.sigValue}>{t(witnessBy) || "________________"}</Text>
-      </View>
-    </View>
+    <SignatureBlock
+      columns={[
+        { label: "Tested By", name: t(testedBy), stamp: loadStampFile(stampUrl) },
+        { label: "Witness By", name: t(witnessBy) },
+      ]}
+      submittedBy={submittedBy ? t(submittedBy) : null}
+    />
   );
 }
 
@@ -219,23 +219,13 @@ export function PowerTrDocument({
     ["LV Volts", h.lvVolts],
   ];
 
+  const letterhead = loadLetterhead();
+
   return (
     <Document title={`${reportNumber} - ${POWER_TR_REPORT_TITLE}`} author={companyName}>
       <Page size="A4" style={S.page} wrap>
-        <View style={S.topRow}>
-          <View>
-            <Text style={S.company}>{t(companyName)}</Text>
-            <Text style={{ fontSize: 7.5, color: "#64748b", marginTop: 2 }}>
-              {t(meta.siteName) || "Commissioning Test Report"}
-            </Text>
-          </View>
-          <View style={S.topRight}>
-            <Text style={S.reportTitle}>{POWER_TR_REPORT_TITLE}</Text>
-            <Text style={S.reportNo}>Report No: {t(reportNumber)}</Text>
-          </View>
-        </View>
-
-        <Text style={S.mainTitle}>
+        {letterhead ? <Image src={letterhead} style={S.letterhead} /> : null}
+        <Text style={[S.mainTitle, { marginTop: letterhead ? 10 : 0 }]}>
           Power Transformer Testing Report
         </Text>
 
@@ -257,7 +247,7 @@ export function PowerTrDocument({
 
         {/* Sheet 1 — Ratio Test */}
         {sec1 ? (
-        <View style={S.section}>
+        <View style={S.section} wrap={false}>
           <Text style={S.sectionTitle}>1.  RATIO TEST</Text>
           <DataTable
             cols={[
@@ -304,7 +294,7 @@ export function PowerTrDocument({
 
         {/* Sheet 2 — Voltage Ratio Test */}
         {sec2 ? (
-        <View style={S.section}>
+        <View style={S.section} wrap={false}>
           <Text style={S.sectionTitle}>2.  VOLTAGE RATIO TEST</Text>
           <DataTable
             cols={[
@@ -324,7 +314,7 @@ export function PowerTrDocument({
 
         {/* Sheet 3 — MB / Short Circuit */}
         {sec3 ? (
-        <View style={S.section}>
+        <View style={S.section} wrap={false}>
           <Text style={S.sectionTitle}>3.  MAGNETIC BALANCE & SHORT CIRCUIT TEST</Text>
           <SubSection
             title="Magnetic Balance Test (HV Side) - 1-phase applied on HV Side"
@@ -373,7 +363,7 @@ export function PowerTrDocument({
 
         {/* Sheet 4 — Charging Current */}
         {sec4 ? (
-        <View style={S.section}>
+        <View style={S.section} wrap={false}>
           <Text style={S.sectionTitle}>4.  CHARGING / MAGNETIZING CURRENT TEST</Text>
           <SubSection
             title="Magnetizing Current Test (HV Side) - 440V applied on HV Side"
@@ -402,7 +392,7 @@ export function PowerTrDocument({
 
         {/* Sheet 5 — Winding Resistance */}
         {sec5 ? (
-        <View style={S.section}>
+        <View style={S.section} wrap={false}>
           <Text style={S.sectionTitle}>5.  WINDING RESISTANCE MEASUREMENT</Text>
           <SubSection
             title="HV Winding - Resistance (mOhm)"
@@ -431,7 +421,7 @@ export function PowerTrDocument({
 
         {/* Sheet 6 — Vector Group / IR / BDV */}
         {sec6 ? (
-        <View style={S.section}>
+        <View style={S.section} wrap={false}>
           <Text style={S.sectionTitle}>6.  VECTOR GROUP CHECK / IR VALUE / BDV TEST</Text>
           <SubSection
             title="Vector Group Check Test - 3-phase applied on HV Side & R-r Shorted"
@@ -482,7 +472,7 @@ export function PowerTrDocument({
 
         {/* Sheet 7 — Tan Delta */}
         {sec7 ? (
-        <View style={S.section}>
+        <View style={S.section} wrap={false}>
           <Text style={S.sectionTitle}>7.  TAN DELTA & CAPACITANCE TEST OF POWER TRANSFORMER</Text>
           <View style={S.metaGrid}>
             {(
@@ -545,13 +535,14 @@ export function PowerTrDocument({
         </View>
         ) : null}
 
-        <View style={S.section}>
-          <SignatureBlock testedBy={sig.testedBy} witnessBy={sig.witnessBy} testedByStamp={meta.testedByStamp} />
+        <View style={S.section} wrap={false}>
+          <SignatureArea
+            testedBy={sig.testedBy}
+            witnessBy={sig.witnessBy}
+            testedByStamp={meta.testedByStamp}
+            submittedBy={meta.testedByName}
+          />
         </View>
-
-        {meta.testedByName ? (
-          <Text style={{ fontSize: 7, color: "#64748b", marginTop: 4 }}>Submitted by: {t(meta.testedByName)}</Text>
-        ) : null}
       </Page>
     </Document>
   );

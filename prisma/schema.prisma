@@ -111,6 +111,7 @@ model Company {
   employees     Employee[]
   assignments   TestingAssignment[]
   reports       TestingReport[]
+  reportFiles   ProjectReportFile[]
   companyAdmins User[]
 }
 
@@ -130,6 +131,8 @@ model Project {
   sites       Site[]
   assignments TestingAssignment[]
   reports     TestingReport[]
+  reportFiles ProjectReportFile[]
+  reportFolders ProjectReportFolder[]
 
   @@index([companyId])
 }
@@ -152,6 +155,7 @@ model Site {
   project     Project?           @relation(fields: [projectId], references: [id])
   assignments TestingAssignment[]
   reports     TestingReport[]
+  reportFiles ProjectReportFile[]
 
   @@index([companyId])
   @@index([projectId])
@@ -285,6 +289,7 @@ model TestingReport {
   attachments               Attachment[]
   signatures                Signature[]
   notifications             ReportNotification[]
+  reportFiles               ProjectReportFile[]
 
   @@index([companyId])
   @@index([status])
@@ -644,6 +649,54 @@ model UserNotification {
 
   @@index([userId])
   @@index([notificationId])
+}
+
+model ProjectReportFolder {
+  id        String   @id @default(cuid())
+  projectId String
+  name      String
+  parentId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent  ProjectReportFolder? @relation("FolderTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children ProjectReportFolder[] @relation("FolderTree")
+  files   ProjectReportFile[]
+
+  @@index([projectId])
+  @@index([parentId])
+}
+
+model ProjectReportFile {
+  id            String   @id @default(cuid())
+  projectId     String
+  companyId     String?
+  siteId        String?
+  folderId      String?
+  reportId      String?
+  originalName  String
+  fileName      String
+  storagePath   String
+  mimeType      String   @default("application/pdf")
+  fileSize      Int
+  reportType    String?
+  uploadedById  String?
+  uploadedByName String?
+  uploadedAt    DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  site    Site?    @relation(fields: [siteId], references: [id], onDelete: SetNull)
+  folder  ProjectReportFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  report  TestingReport? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([folderId])
+  @@index([companyId])
+  @@index([siteId])
+  @@index([reportId])
 }
 
 model AuditLog {

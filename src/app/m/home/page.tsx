@@ -3,9 +3,10 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { FileText, ChevronRight, Send, Gauge } from "lucide-react";
+import { Send, Gauge, Activity, ShieldCheck, FileText } from "lucide-react";
 import { cn, initials, formatDate } from "@/lib/utils";
 import { OfflineSavesCard } from "@/components/mobile/offline-status";
+import { StartTestCard } from "@/components/mobile/start-test-card";
 import { PdfIcon } from "@/components/pdf-icon";
 
 export const dynamic = "force-dynamic";
@@ -17,19 +18,10 @@ export default async function MobileHomePage() {
   const userId = session.user.id;
   const employeeId = session.user.employeeId;
 
-  const [user, myDrafts, mySubmitted, corrections, myReports] = await Promise.all([
+  const [user, mySubmitted, corrections, myReports, sites] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { name: true, role: true },
-    }),
-    prisma.testingReport.findMany({
-      where: {
-        testedById: employeeId ?? "none",
-        status: "DRAFT",
-      },
-      orderBy: { updatedAt: "desc" },
-      take: 4,
-      include: { site: { select: { name: true } } },
     }),
     prisma.testingReport.count({
       where: { testedById: employeeId ?? "none", status: { in: ["SUBMITTED", "APPROVED", "GENERATED"] } },
@@ -39,6 +31,11 @@ export default async function MobileHomePage() {
     }),
     prisma.testingReport.count({
       where: { testedById: employeeId ?? "none" },
+    }),
+    prisma.site.findMany({
+      where: session.user.companyId ? { companyId: session.user.companyId } : undefined,
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
     }),
   ]);
 
@@ -104,68 +101,79 @@ export default async function MobileHomePage() {
         <div className="grid grid-cols-2 gap-3">
           {[
             {
-              href: "/m/drafts?new=POWER_TR_STAR_STAR",
+              code: "POWER_TR_STAR_STAR",
               icon: Gauge,
               chip: "bg-indigo-100 text-indigo-600",
-              title: "Power TR Testing Report (Star-Star TR)",
+              title: "Power Transformer Testing Report",
               desc: "Ratio, MB, winding, IR & Tan Delta — all 7 sheets",
               wide: true,
             },
+            {
+              code: "CB_66KV",
+              icon: Gauge,
+              chip: "bg-sky-100 text-sky-600",
+              title: "66 KV CB Testing Report",
+              desc: "Name plate, IR, operations, indications, CRM & timing",
+              wide: true,
+            },
+            {
+              code: "MCT_66KV",
+              icon: Activity,
+              chip: "bg-amber-100 text-amber-600",
+              title: "66 KV MCT Testing Report",
+              desc: "Core details, IR, winding, polarity, ratio & series test",
+              wide: true,
+            },
+            {
+              code: "PCT_66KV",
+              icon: ShieldCheck,
+              chip: "bg-rose-100 text-rose-600",
+              title: "66 KV PCT Testing Report",
+              desc: "4 cores, core identification, ratio, knee point & metering",
+              wide: true,
+            },
+            {
+              code: "MPT_66KV",
+              icon: FileText,
+              chip: "bg-cyan-100 text-cyan-600",
+              title: "66 KV MPT Testing Report",
+              desc: "Metering PT - Name plate, Capacitance & Tan Delta, IR, Polarity, Ratio",
+              wide: true,
+            },
+            {
+              code: "PPT_66KV",
+              icon: FileText,
+              chip: "bg-indigo-100 text-indigo-600",
+              title: "66 KV PPT Testing Report",
+              desc: "Bus PT - Name plate, Capacitance & Tan Delta, IR, Polarity, Ratio",
+              wide: true,
+            },
+            {
+              code: "RELAY_66_33KV",
+              icon: Activity,
+              chip: "bg-emerald-100 text-emerald-600",
+              title: "66/33 KV Relay Testing Report",
+              desc: "Relay details, visual inspection & testing",
+              wide: true,
+            },
           ].map((t) => (
-            <Link
+            <StartTestCard
               key={t.title}
-              href={t.href}
+              templateCode={t.code}
+              siteId={sites[0]?.id ?? null}
+              label={t.title}
               className={cn(
-                "group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition active:scale-[0.98]",
+                "group rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm transition active:scale-[0.98]",
                 t.wide && "col-span-2"
               )}
             >
-              <div className={cn("mb-2 flex h-10 w-10 items-center justify-center rounded-xl", t.chip)}>
-                <t.icon className="h-5 w-5" />
+              <div className={cn("mb-1.5 flex h-8 w-8 items-center justify-center rounded-xl", t.chip)}>
+                <t.icon className="h-4 w-4" />
               </div>
               <p className="text-sm font-semibold text-slate-900">{t.title}</p>
               <p className="mt-0.5 text-xs text-slate-500">{t.desc}</p>
-            </Link>
+            </StartTestCard>
           ))}
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-2.5 flex items-center justify-between">
-          <h2 className="text-sm font-bold text-slate-900">Continue last draft</h2>
-          <Link href="/m/drafts" className="flex items-center gap-0.5 text-xs font-semibold text-sky-600">
-            All drafts <ChevronRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-        <div className="space-y-2.5">
-          {myDrafts.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-6 text-center">
-              <FileText className="mx-auto mb-2 h-7 w-7 text-slate-300" />
-              <p className="text-sm font-medium text-slate-500">No drafts yet.</p>
-              <p className="text-xs text-slate-400">Pick a test above to begin.</p>
-            </div>
-          ) : (
-            myDrafts.map((d) => (
-              <Link
-                key={d.id}
-                href={`/m/reports/${d.id}/edit`}
-                className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition active:scale-[0.99]"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
-                    <FileText className="h-4 w-4" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-900">{d.reportNumber}</p>
-                    <p className="truncate text-xs text-slate-500">
-                      {d.site?.name ?? "No site"} · {d.testingType.replace(/_/g, " ")}
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
-              </Link>
-            ))
-          )}
         </div>
       </section>
     </div>

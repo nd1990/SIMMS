@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
   LayoutDashboard,
-  Building2,
   FolderKanban,
   MapPin,
   Users,
@@ -26,7 +25,6 @@ import { BrandLogo } from "@/components/brand-logo";
 
 const mainNav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/companies", label: "Companies", icon: Building2 },
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/sites", label: "Sites", icon: MapPin },
   { href: "/employees", label: "Employees", icon: Users },

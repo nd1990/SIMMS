@@ -1,5 +1,6 @@
 import type { TestStatus } from "@prisma/client";
 import type { PowerTrData } from "@/lib/power-tr-types";
+import type { CbData, MctData, PctData, PtData } from "@/lib/equipment-types";
 
 // The form payload contract shared between the mobile app and the server.
 // Most readings are stored as strings to mirror the Excel-based sheets.
@@ -156,6 +157,12 @@ export type ReportPayload = {
   meteringProtection?: MeteringProtectionRow[];
   // Power Transformer (Star-Star) report — all seven sheets.
   powerTr?: PowerTrData;
+  // 66 KV equipment reports.
+  cb?: CbData;
+  mct?: MctData;
+  pct?: PctData;
+  mpt?: PtData;
+  ppt?: PtData;
 };
 
 export const DEFAULT_CORES: CoreRow[] = [

@@ -75,10 +75,19 @@ export async function PUT(request: NextRequest, ctx: RouteContext) {
     },
   });
 
-  if (emailChanged && existingUser) {
+  // Keep the linked login account in step with the employee record: a renamed
+  // employee must see the new name on their next request, not only at login.
+  if (existingUser) {
     await prisma.user.update({
       where: { id: existingUser.id },
-      data: { email: newEmail, name: employee.name },
+      data: {
+        name: employee.name,
+        email: emailChanged ? newEmail : undefined,
+        role: employee.role !== existing.role ? employee.role : undefined,
+        companyId: employee.companyId !== existing.companyId ? employee.companyId : undefined,
+        status:
+          employee.status !== existing.status ? (employee.status ? "ACTIVE" : "INACTIVE") : undefined,
+      },
     });
   }
 

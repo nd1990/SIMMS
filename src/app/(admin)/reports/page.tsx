@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ReportDeleteButton } from "@/components/admin/report-delete-button";
 import { PdfIcon } from "@/components/pdf-icon";
 import { FileText, Eye, Pencil } from "lucide-react";
+import { MoveReportToProject } from "@/components/admin/move-report-to-project";
 import { formatDate } from "@/lib/utils";
 import { withBase } from "@/lib/base-path";
 import { statusLabels } from "@/lib/constants";
@@ -51,6 +52,12 @@ export default async function ReportsPage({
     session.user.role === "MASTER_ADMIN" || session.user.role === "COMPANY_ADMIN";
   const canPdf = hasPermission(session.user.role, "reports:generate_pdf");
 
+  const projects = await prisma.project.findMany({
+    where: session.user.role !== "MASTER_ADMIN" ? { companyId: session.user.companyId ?? "none" } : {},
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, code: true },
+  });
+  
   return (
     <div className="space-y-6">
       <PageHeader title="Test Reports" description="Browse and manage CT testing reports across sites." />
@@ -132,6 +139,9 @@ export default async function ReportsPage({
                           <PdfIcon className="h-4 w-4" />
                           PDF
                         </a>
+                      )}
+                      {(session.user.role === "MASTER_ADMIN" || session.user.role === "COMPANY_ADMIN") && (
+                        <MoveReportToProject reportId={r.id} projects={projects} />
                       )}
                       {canDelete && (
                         <ReportDeleteButton

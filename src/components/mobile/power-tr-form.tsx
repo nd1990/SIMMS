@@ -1,12 +1,11 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment } from "react";
 import { CheckCircle2, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { stampForName, withBasePath } from "@/lib/employee-stamps";
+import { SignatureFields } from "@/components/mobile/signature-fields";
 import {
   type PowerTrData,
   type PowerTrHeader,
@@ -212,32 +211,6 @@ export function PowerTrForm({
   tab: SheetId;
   onTabChange: (tab: SheetId) => void;
 }) {
-  const [employees, setEmployees] = useState<{ id: string; name: string; stampPath: string | null }[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/employees")
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to load employees"))))
-      .then((body: { data?: { id: string; name: string; stampPath?: string | null }[] }) => {
-        if (cancelled || !Array.isArray(body.data)) return;
-        const names = Array.from(
-          new Map(
-            body.data
-              .filter((e) => e.name?.trim())
-              .map((e) => [e.id, { id: e.id, name: e.name.trim(), stampPath: e.stampPath ?? null }])
-          ).values()
-        );
-        setEmployees(names);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const testedByStamp =
-    employees.find((e) => e.name === data.signatures.testedBy)?.stampPath ?? null;
-
   function patch(partial: Partial<PowerTrData>) {
     onChange({ ...data, ...partial });
   }
@@ -1155,52 +1128,11 @@ export function PowerTrForm({
 
       {/* Signatures ------------------------------------------------------ */}
       {tab === "sign" && (
-        <div className="space-y-2">
-          <SheetTitle>Tested By / Witness By</SheetTitle>
-          <p className="text-[11px] text-slate-400">Shown on every sheet of the PDF report.</p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label="Tested By">
-              {employees.length > 0 ? (
-                <Select
-                  value={data.signatures.testedBy}
-                  onChange={(e) => patch({ signatures: { ...data.signatures, testedBy: e.target.value } })}
-                >
-                  <option value="" disabled>
-                    Select employee
-                  </option>
-                  {!employees.some((emp) => emp.name === data.signatures.testedBy) && data.signatures.testedBy ? (
-                    <option value={data.signatures.testedBy}>{data.signatures.testedBy}</option>
-                  ) : null}
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.name}>
-                      {emp.name}
-                    </option>
-                  ))}
-                </Select>
-              ) : (
-                <Input
-                  value={data.signatures.testedBy}
-                  onChange={(e) => patch({ signatures: { ...data.signatures, testedBy: e.target.value } })}
-                  placeholder="Name / names"
-                />
-              )}
-              {stampForName(data.signatures.testedBy, testedByStamp) ? (
-                <img
-                  src={withBasePath(stampForName(data.signatures.testedBy, testedByStamp)!)}
-                  alt="Stamp"
-                  className="mt-2 h-16 w-auto object-contain"
-                />
-              ) : null}
-            </Field>
-            <Field label="Witness By">
-              <Input
-                value={data.signatures.witnessBy}
-                onChange={(e) => patch({ signatures: { ...data.signatures, witnessBy: e.target.value } })}
-                placeholder="Witness name / company"
-              />
-            </Field>
-          </div>
-        </div>
+        <SignatureFields
+          values={data.signatures}
+          onChange={(key, value) => patch({ signatures: { ...data.signatures, [key]: value } })}
+          title="Tested By / Witness By"
+        />
       )}
     </div>
   );

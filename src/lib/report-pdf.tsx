@@ -5,29 +5,60 @@ import {
   Text,
   View,
   StyleSheet,
+  Image,
 } from "@react-pdf/renderer";
+import { existsSync, readFileSync } from "fs";
+import * as pathLib from "path";
 import type { ReportPayload, CoreRow, ChecklistRow } from "@/lib/report-types";
 import { TEMPLATE_1_CHECKLIST, TEMPLATE_2_SECTIONS } from "@/lib/report-types";
 import { POWER_TR_TEMPLATE_CODE } from "@/lib/power-tr-types";
 import { PowerTrDocument } from "@/lib/power-tr-pdf";
+import {
+  CB_TEMPLATE_CODE,
+  MCT_TEMPLATE_CODE,
+  MPT_TEMPLATE_CODE,
+  PCT_TEMPLATE_CODE,
+  PPT_TEMPLATE_CODE,
+} from "@/lib/equipment-types";
+import { CbDocument, MctDocument, PctDocument, PtDocument } from "@/lib/equipment-pdf";
+import { stampForName } from "@/lib/employee-stamps";
+import { SignatureBlock, loadStampFile } from "@/lib/pdf-signature";
+
+const letterheadCache = new Map<string, Buffer | null>();
+
+function loadLetterhead(): Buffer | null {
+  const key = "letterhead";
+  if (letterheadCache.has(key)) return letterheadCache.get(key) ?? null;
+  const file = pathLib.join(process.cwd(), "PDFHEADER", "pdf-top-header.jpeg");
+  const buffer = existsSync(file) ? readFileSync(file) : null;
+  letterheadCache.set(key, buffer);
+  return buffer;
+}
 
 const R = StyleSheet.create({
   page: {
     paddingHorizontal: 28,
-    paddingVertical: 24,
+    paddingTop: 18,
+    paddingBottom: 24,
     fontSize: 9,
     fontFamily: "Helvetica",
     color: "#111827",
   },
+  letterhead: {
+    width: "100%",
+    marginBottom: 0,
+    padding: 0,
+  },
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    borderBottomWidth: 2,
+    borderBottomWidth: 0,
     borderBottomColor: "#149f93",
-    paddingBottom: 8,
+    paddingBottom: 6,
     marginBottom: 8,
   },
   company: { fontSize: 13, fontWeight: "bold", color: "#005b91" },
+  mainTitle: { fontSize: 12, fontWeight: "bold", textAlign: "center", marginBottom: 10, color: "#0f172a" },
   headRight: { alignItems: "flex-end" },
   reportTitle: { fontSize: 10, fontWeight: "bold", color: "#005b91" },
   reportNo: { fontSize: 9, color: "#334155", marginTop: 2 },
@@ -126,7 +157,7 @@ function Sheet({
 }) {
   if (rows.length === 0) return null;
   return (
-    <View style={R.section} wrap>
+    <View style={R.section} wrap={false}>
       <Text style={R.sectionTitle}>{title}</Text>
       <View>
         <View style={[R.table, { flexDirection: "row" }]}>
@@ -167,7 +198,7 @@ function KeyValueSheet({
     ? [entries.slice(0, Math.ceil(entries.length / 2)), entries.slice(Math.ceil(entries.length / 2))]
     : [entries];
   return (
-    <View style={R.section} wrap>
+    <View style={R.section} wrap={false}>
       <Text style={R.sectionTitle}>{title}</Text>
       <View style={{ flexDirection: "row" }}>
         {chunks.map((chunk, ci) => (
@@ -228,6 +259,70 @@ export function ReportDocument({
     );
   }
 
+  if (payload.templateCode === CB_TEMPLATE_CODE && payload.cb) {
+    return (
+      <CbDocument
+        reportNumber={reportNumber}
+        companyName={meta.companyName}
+        payload={payload.cb}
+        meta={{
+          siteName: meta.siteName,
+          testingDate: meta.testingDate,
+          testedByName: meta.testedByName,
+          testedByStamp: meta.testedByStamp,
+        }}
+      />
+    );
+  }
+
+  if (payload.templateCode === MCT_TEMPLATE_CODE && payload.mct) {
+    return (
+      <MctDocument
+        reportNumber={reportNumber}
+        companyName={meta.companyName}
+        payload={payload.mct}
+        meta={{
+          siteName: meta.siteName,
+          testingDate: meta.testingDate,
+          testedByName: meta.testedByName,
+          testedByStamp: meta.testedByStamp,
+        }}
+      />
+    );
+  }
+
+  if (payload.templateCode === PCT_TEMPLATE_CODE && payload.pct) {
+    return (
+      <PctDocument
+        reportNumber={reportNumber}
+        companyName={meta.companyName}
+        payload={payload.pct}
+        meta={{
+          siteName: meta.siteName,
+          testingDate: meta.testingDate,
+          testedByName: meta.testedByName,
+          testedByStamp: meta.testedByStamp,
+        }}
+      />
+    );
+  }
+
+  if ((payload.templateCode === MPT_TEMPLATE_CODE && payload.mpt) || (payload.templateCode === PPT_TEMPLATE_CODE && payload.ppt)) {
+    return (
+      <PtDocument
+        reportNumber={reportNumber}
+        companyName={meta.companyName}
+        payload={(payload.mpt || payload.ppt) as any}
+        meta={{
+          siteName: meta.siteName,
+          testingDate: meta.testingDate,
+          testedByName: meta.testedByName,
+          testedByStamp: meta.testedByStamp,
+        }}
+      />
+    );
+  }
+
   const status__ = meta.overallResult ? stripUnsafe(meta.overallResult) : "";
 
   const coreCols: Column[] = [
@@ -263,6 +358,9 @@ export function ReportDocument({
     ["C5.1 - C7.1", connection.c51C71],
   ].filter(([, v]) => v !== undefined && v !== "") as [string, string][];
 
+  const letterhead = loadLetterhead();
+  const stampUrl = stampForName(meta.testedByName, meta.testedByStamp);
+
   return (
     <Document
       title={`${reportNumber} - ${templateName}`}
@@ -270,18 +368,8 @@ export function ReportDocument({
       subject={`Current Transformer Test Report ${reportNumber}`}
     >
       <Page size="A4" style={R.page} wrap>
-        <View style={R.headerRow}>
-          <View>
-            <Text style={R.company}>{stripUnsafe(meta.companyName)}</Text>
-            <Text style={{ fontSize: 8, color: "#64748b", marginTop: 2 }}>
-              {stripUnsafe(meta.epcBy) ? `EPC: ${stripUnsafe(meta.epcBy)}` : "Commissioning Test Report"}
-            </Text>
-          </View>
-          <View style={R.headRight}>
-            <Text style={R.reportTitle}>{templateName}</Text>
-            <Text style={R.reportNo}>Report No: {stripUnsafe(reportNumber)}</Text>
-          </View>
-        </View>
+        {letterhead ? <Image src={letterhead} style={R.letterhead} /> : null}
+        <Text style={[R.mainTitle, { marginTop: letterhead ? 10 : 0 }]}>{templateName}</Text>
 
         {status__ && (
           <View style={R.statusTag}>
@@ -466,25 +554,29 @@ export function ReportDocument({
         )}
 
         {meta.finalRemarks && (
-          <View style={R.section}>
+          <View style={R.section} wrap={false}>
             <Text style={R.sectionTitle}>Overall Remarks</Text>
             <Text style={R.remarkText}>{stripUnsafe(meta.finalRemarks)}</Text>
           </View>
         )}
 
-        <View style={R.footer}>
-          {[
-            ["Tested By", meta.testedByName, meta.testedByDesignation],
-            ["Approved By", meta.approvedByName, meta.approvedByDesignation],
-          ].map(([label, name, designation]) => (
-            <View key={label} style={R.sigBlock}>
-              <Text style={{ fontSize: 7, color: "#64748b", textTransform: "uppercase" }}>{label}</Text>
-              <Text style={R.sigLine}>{stripUnsafe(name) || "________________"}</Text>
-              <Text style={{ fontSize: 7, color: "#64748b", marginTop: 1 }}>
-                {stripUnsafe(designation) || ""}
-              </Text>
-            </View>
-          ))}
+        <View style={R.section} wrap={false}>
+          <SignatureBlock
+            columns={[
+              {
+                label: "Tested By",
+                name: stripUnsafe(meta.testedByName),
+                designation: stripUnsafe(meta.testedByDesignation),
+                stamp: loadStampFile(stampUrl),
+              },
+              {
+                label: "Approved By",
+                name: stripUnsafe(meta.approvedByName),
+                designation: stripUnsafe(meta.approvedByDesignation),
+              },
+            ]}
+            submittedBy={stripUnsafe(meta.testedByName)}
+          />
         </View>
       </Page>
     </Document>

@@ -10,6 +10,20 @@ import {
   POWER_TR_SHEETS,
   buildPowerTrDefaultPayload,
 } from "@/lib/power-tr-types";
+import {
+  CB_TEMPLATE_CODE,
+  EQUIPMENT_TEMPLATES,
+  MCT_TEMPLATE_CODE,
+  MPT_TEMPLATE_CODE,
+  PCT_TEMPLATE_CODE,
+  PPT_TEMPLATE_CODE,
+  RELAY_TEMPLATE_CODE,
+  buildCbDefaultPayload,
+  buildMctDefaultPayload,
+  buildPctDefaultPayload,
+  buildPtDefaultPayload,
+  isEquipmentTemplateCode,
+} from "@/lib/equipment-types";
 
 // GET /api/reports?status=DRAFT&mine=true — list reports the user can view.
 export async function GET(request: NextRequest) {
@@ -83,6 +97,20 @@ export async function POST(request: NextRequest) {
     });
   }
 
+  if (!template && isEquipmentTemplateCode(templateCode)) {
+    const meta = EQUIPMENT_TEMPLATES[templateCode];
+    template = await prisma.testingTemplate.upsert({
+      where: { code: meta.code },
+      update: { isActive: true },
+      create: {
+        name: meta.name,
+        code: meta.code,
+        version: "1.0",
+        config: { sheets: [...meta.sheets] },
+      },
+    });
+  }
+
   if (!template) return apiError("Unknown testing template", 404);
 
   const companyId = user.companyId;
@@ -106,6 +134,18 @@ export async function POST(request: NextRequest) {
       data:
         templateCode === POWER_TR_TEMPLATE_CODE
           ? { templateCode: POWER_TR_TEMPLATE_CODE, powerTr: buildPowerTrDefaultPayload() }
+          : templateCode === CB_TEMPLATE_CODE
+          ? { templateCode: CB_TEMPLATE_CODE, cb: buildCbDefaultPayload() }
+          : templateCode === MCT_TEMPLATE_CODE
+          ? { templateCode: MCT_TEMPLATE_CODE, mct: buildMctDefaultPayload() }
+          : templateCode === PCT_TEMPLATE_CODE
+          ? { templateCode: PCT_TEMPLATE_CODE, pct: buildPctDefaultPayload() }
+          : templateCode === MPT_TEMPLATE_CODE
+          ? { templateCode: MPT_TEMPLATE_CODE, mpt: buildPtDefaultPayload(false) }
+          : templateCode === PPT_TEMPLATE_CODE
+          ? { templateCode: PPT_TEMPLATE_CODE, ppt: buildPtDefaultPayload(true) }
+          : templateCode === RELAY_TEMPLATE_CODE
+          ? { templateCode: RELAY_TEMPLATE_CODE, relay: {} }
           : templateCode === "66KV_LINE_CT"
           ? buildTemplate2DefaultPayload()
           : { templateCode, version: "1.0" },

@@ -14,8 +14,8 @@
 // payload simple to persist in the report.data JSON column.
 
 export const POWER_TR_TEMPLATE_CODE = "POWER_TR_STAR_STAR";
-export const POWER_TR_TEMPLATE_NAME = "Power TR Testing Report (Star-Star TR)";
-export const POWER_TR_REPORT_TITLE = "POWER TR TESTING REPORT (STAR-STAR TR)";
+export const POWER_TR_TEMPLATE_NAME = "Power Transformer Testing Report";
+export const POWER_TR_REPORT_TITLE = "POWER TRANSFORMER TESTING REPORT";
 
 export const POWER_TR_SHEETS = [
   "Ratio Test",
