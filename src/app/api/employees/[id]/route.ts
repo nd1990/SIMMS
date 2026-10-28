@@ -33,7 +33,7 @@ export async function PUT(request: NextRequest, ctx: RouteContext) {
   const parsed = employeeSchema.safeParse(body);
   if (!parsed.success) return apiError(parsed.error.issues[0]?.message ?? "Invalid data", 400);
 
-  if (user.role !== "MASTER_ADMIN" && parsed.data.companyId !== user.companyId) {
+  if (user.role !== "MASTER_ADMIN" && parsed.data.companyId && parsed.data.companyId !== user.companyId) {
     return apiError("You can only edit employees for your company", 403);
   }
 

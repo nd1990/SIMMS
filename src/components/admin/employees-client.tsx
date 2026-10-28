@@ -27,8 +27,8 @@ type Employee = {
   email: string;
   mobileNumber: string | null;
   role: Role;
-  companyId?: string;
-  company?: { name: string };
+  companyId?: string | null;
+  company?: { name: string } | null;
   department: string | null;
   designation: string | null;
   designationGrade: string | null;

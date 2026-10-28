@@ -33,6 +33,7 @@ yarn-error.log*
 
 # runtime uploads (project report PDFs live on disk, metadata in the database)
 /uploads/
+/public/uploads/
 
 # env files (can opt-in for committing if needed)
 .env*

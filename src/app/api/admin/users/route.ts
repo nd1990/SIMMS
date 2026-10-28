@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     if (!emp) return apiError("Linked employee not found", 400);
     const existingLink = await prisma.user.findUnique({ where: { employeeId: parsed.data.employeeId } });
     if (existingLink) return apiError("That employee already has a login account", 409);
-    if (!parsed.data.companyId) parsed.data.companyId = emp.companyId;
+    if (!parsed.data.companyId) parsed.data.companyId = emp.companyId ?? undefined;
   }
 
   const created = await prisma.user.create({

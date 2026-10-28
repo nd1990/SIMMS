@@ -29,11 +29,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = React.useState<ToastData[]>([]);
 
   const toast = useCallback((type: ToastType, message: string) => {
-    const id = `toast-${++toastCounter}`;
-    setToasts((prev) => [...prev, { id, type, message }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
+    setToasts((prev) => {
+      // Prevent duplicate toasts with the same type and message
+      if (prev.some((t) => t.type === type && t.message === message)) return prev;
+      const id = `toast-${++toastCounter}`;
+      setTimeout(() => {
+        setToasts((p) => p.filter((t) => t.id !== id));
+      }, 4000);
+      return [...prev, { id, type, message }];
+    });
   }, []);
 
   return (

@@ -168,7 +168,7 @@ model Employee {
   email       String   @unique
   mobileNumber String?
   role        Role     @default(TECHNICIAN)
-  companyId   String
+  companyId   String?
   department  String?
   designation String?
   designationGrade String?
@@ -178,7 +178,7 @@ model Employee {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  company            Company             @relation(fields: [companyId], references: [id])
+  company            Company?            @relation(fields: [companyId], references: [id])
   user               User?
   assignments        TestingAssignment[]
   attachments        Attachment[]

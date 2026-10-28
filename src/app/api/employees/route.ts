@@ -32,12 +32,9 @@ export async function POST(request: NextRequest) {
   const parsed = employeeSchema.safeParse(body);
   if (!parsed.success) return apiError(parsed.error.issues[0]?.message ?? "Invalid data", 400);
 
-  const companyId = parsed.data.companyId ?? user.companyId;
-  if (user.role !== "MASTER_ADMIN" && companyId !== user.companyId) {
+  const companyId = parsed.data.companyId ?? user.companyId ?? undefined;
+  if (user.role !== "MASTER_ADMIN" && companyId && companyId !== user.companyId) {
     return apiError("You can only add employees for your company", 403);
-  }
-  if (!companyId) {
-    return apiError("Company is required", 400);
   }
 
   const dupCode = await prisma.employee.findUnique({ where: { code: parsed.data.code } });
